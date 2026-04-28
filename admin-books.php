@@ -1,0 +1,103 @@
+<?php
+session_start();
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/csrf.php';
+$user = require_admin();
+
+$message = '';
+$editingId = (int) ($_GET['edit'] ?? 0);
+$editing = $editingId ? fetch_one('SELECT * FROM books WHERE id = ?', [$editingId]) : null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'delete') {
+        $stmt = db()->prepare('DELETE FROM books WHERE id = ?');
+        $stmt->execute([(int) $_POST['book_id']]);
+        $message = 'Book deleted.';
+    } else {
+        $title = trim($_POST['title'] ?? '');
+        $author = trim($_POST['author'] ?? '');
+        $category = trim($_POST['category'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $price = (float) ($_POST['price'] ?? 0);
+        $inventory = (int) ($_POST['inventory'] ?? 0);
+        $coverUrl = trim($_POST['cover_url'] ?? '');
+
+        if ($title !== '' && $author !== '' && $category !== '' && $description !== '') {
+            if ($action === 'update') {
+                $stmt = db()->prepare(
+                    'UPDATE books SET title = ?, author = ?, category = ?, description = ?, price = ?, inventory = ?, cover_url = ? WHERE id = ?'
+                );
+                $stmt->execute([$title, $author, $category, $description, $price, $inventory, $coverUrl, (int) $_POST['book_id']]);
+                $message = 'Book updated.';
+            } else {
+                $stmt = db()->prepare(
+                    'INSERT INTO books (title, author, category, description, price, inventory, cover_url) VALUES (?, ?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([$title, $author, $category, $description, $price, $inventory, $coverUrl]);
+                $message = 'Book added.';
+            }
+        }
+    }
+}
+
+$books = fetch_all('SELECT * FROM books ORDER BY title');
+$pageTitle = 'Manage Books';
+include __DIR__ . '/includes/header.php';
+?>
+
+<section class="section">
+    <div class="container layout">
+        <div>
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Admin Bookstore</span>
+                    <h1>Control catalogue content and stock levels.</h1>
+                </div>
+                <a class="button ghost" href="admin-dashboard.php">Back to Admin</a>
+            </div>
+            <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
+            <div class="grid book-grid">
+                <?php foreach ($books as $book): ?>
+                    <article class="panel">
+                        <img src="<?= htmlspecialchars($book['cover_url']) ?>" alt="" class="book-cover">
+                        <span class="tag"><?= htmlspecialchars($book['category']) ?></span>
+                        <h2><?= htmlspecialchars($book['title']) ?></h2>
+                        <p class="muted"><?= htmlspecialchars($book['author']) ?></p>
+                        <p>RM <?= number_format((float) $book['price'], 2) ?> | <?= (int) $book['inventory'] ?> in stock</p>
+                        <div class="actions">
+                            <a class="button small ghost" href="admin-books.php?edit=<?= (int) $book['id'] ?>">Edit</a>
+                            <form method="post" class="inline-form">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="book_id" value="<?= (int) $book['id'] ?>">
+                                <button class="button small danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <aside class="panel">
+            <h2><?= $editing ? 'Edit Book' : 'Add Book' ?></h2>
+            <form method="post">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="<?= $editing ? 'update' : 'create' ?>">
+                <input type="hidden" name="book_id" value="<?= (int) ($editing['id'] ?? 0) ?>">
+                <label>Title <input name="title" value="<?= htmlspecialchars($editing['title'] ?? '') ?>" required></label>
+                <label>Author <input name="author" value="<?= htmlspecialchars($editing['author'] ?? '') ?>" required></label>
+                <label>Category <input name="category" value="<?= htmlspecialchars($editing['category'] ?? '') ?>" required></label>
+                <label>Price <input name="price" type="number" step="0.01" min="0" value="<?= htmlspecialchars((string) ($editing['price'] ?? '0.00')) ?>" required></label>
+                <label>Inventory <input name="inventory" type="number" min="0" value="<?= htmlspecialchars((string) ($editing['inventory'] ?? 0)) ?>" required></label>
+                <label>Cover URL <input name="cover_url" value="<?= htmlspecialchars($editing['cover_url'] ?? '') ?>"></label>
+                <label>Description <textarea name="description" required><?= htmlspecialchars($editing['description'] ?? '') ?></textarea></label>
+                <button type="submit"><?= $editing ? 'Update Book' : 'Add Book' ?></button>
+            </form>
+        </aside>
+    </div>
+</section>
+
+<?php include __DIR__ . '/includes/footer.php'; ?>

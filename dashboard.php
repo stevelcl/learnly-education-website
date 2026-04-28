@@ -29,7 +29,7 @@ include __DIR__ . '/includes/header.php';
                 <?php endif; ?>
                 <?php foreach ($progressRows as $row): ?>
                     <h3><a href="course.php?id=<?= (int) $row['id'] ?>"><?= htmlspecialchars($row['title']) ?></a></h3>
-                    <p class="muted"><?= htmlspecialchars($row['subject']) ?> <?= $row['saved'] ? '· Saved' : '' ?></p>
+                    <p class="muted"><?= htmlspecialchars($row['subject']) ?> <?= $row['saved'] ? '| Saved' : '' ?></p>
                     <div class="progress"><span style="width: <?= (int) $row['progress_percent'] ?>%"></span></div>
                     <p><?= (int) $row['progress_percent'] ?>% complete</p>
                 <?php endforeach; ?>
@@ -41,7 +41,7 @@ include __DIR__ . '/includes/header.php';
                     <p class="muted">No purchases yet.</p>
                 <?php endif; ?>
                 <?php foreach ($orders as $order): ?>
-                    <p><strong>Order #<?= (int) $order['id'] ?></strong><br>RM <?= number_format((float) $order['total'], 2) ?> · <?= htmlspecialchars($order['status']) ?></p>
+                    <p><strong>Order #<?= (int) $order['id'] ?></strong><br>RM <?= number_format((float) $order['total'], 2) ?> | <?= htmlspecialchars($order['status']) ?></p>
                 <?php endforeach; ?>
             </article>
 
@@ -54,9 +54,16 @@ include __DIR__ . '/includes/header.php';
                     <p><a href="post.php?id=<?= (int) $post['id'] ?>"><?= htmlspecialchars($post['title']) ?></a><br><span class="muted"><?= htmlspecialchars($post['status']) ?></span></p>
                 <?php endforeach; ?>
             </article>
+
+            <?php if (is_admin($user)): ?>
+                <article class="panel">
+                    <h2>Administration</h2>
+                    <p class="muted">This account can manage users, courses, books, orders, and moderation.</p>
+                    <a class="button small" href="admin-dashboard.php">Open Admin Panel</a>
+                </article>
+            <?php endif; ?>
         </div>
     </div>
 </section>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
-

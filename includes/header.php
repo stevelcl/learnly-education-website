@@ -34,10 +34,13 @@ $user = current_user();
             <a href="cart.php">Cart <span class="badge"><?= cart_count() ?></span></a>
             <?php if ($user): ?>
                 <a href="dashboard.php">Dashboard</a>
+                <?php if (is_admin($user)): ?>
+                    <a href="admin-dashboard.php">Admin</a>
+                <?php endif; ?>
                 <a href="logout.php">Logout</a>
             <?php else: ?>
                 <a href="login.php">Login</a>
-                <a class="button small" href="register.php">Register</a>
+                <a class="button small nav-cta" href="register.php">Register</a>
             <?php endif; ?>
         </nav>
     </header>

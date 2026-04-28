@@ -27,3 +27,18 @@ function is_moderator(?array $user): bool
     return $user && in_array($user['role'], ['admin', 'moderator'], true);
 }
 
+function is_admin(?array $user): bool
+{
+    return $user && $user['role'] === 'admin';
+}
+
+function require_admin(): array
+{
+    $user = require_login();
+    if (!is_admin($user)) {
+        http_response_code(403);
+        exit('Access denied.');
+    }
+
+    return $user;
+}
