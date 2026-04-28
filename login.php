@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/cart.php';
 
 $pageTitle = 'Login';
 $error = '';
@@ -17,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
+        sync_session_cart_to_user((int) $user['id']);
         header('Location: dashboard.php');
         exit;
     }
@@ -33,13 +35,18 @@ include __DIR__ . '/includes/header.php';
             <form method="post">
                 <?= csrf_field() ?>
                 <label>Email <input name="email" type="email" required></label>
-                <label>Password <input name="password" type="password" required></label>
+                <label>Password
+                    <div class="password-field">
+                        <input name="password" type="password" required data-password-input>
+                        <button type="button" class="password-toggle" data-password-toggle>Show</button>
+                    </div>
+                </label>
                 <button type="submit">Login</button>
             </form>
+            <p><a href="forgot-password.php">Forgot Password?</a></p>
             <p class="muted">New here? <a href="register.php">Create an account</a>.</p>
         </div>
     </div>
 </section>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
-

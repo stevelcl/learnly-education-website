@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/cart.php';
 
 $pageTitle = 'Register';
 $error = '';
@@ -20,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = db()->prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)');
         $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT)]);
         $_SESSION['user_id'] = (int) db()->lastInsertId();
+        sync_session_cart_to_user((int) $_SESSION['user_id']);
         header('Location: dashboard.php');
         exit;
     }
@@ -37,7 +39,12 @@ include __DIR__ . '/includes/header.php';
                 <?= csrf_field() ?>
                 <label>Name <input name="name" required></label>
                 <label>Email <input name="email" type="email" required></label>
-                <label>Password <input name="password" type="password" minlength="8" required></label>
+                <label>Password
+                    <div class="password-field">
+                        <input name="password" type="password" minlength="8" required data-password-input>
+                        <button type="button" class="password-toggle" data-password-toggle>Show</button>
+                    </div>
+                </label>
                 <button type="submit">Register</button>
             </form>
         </div>
@@ -45,4 +52,3 @@ include __DIR__ . '/includes/header.php';
 </section>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
-

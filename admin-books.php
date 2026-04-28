@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/media.php';
 $user = require_admin();
 
 $message = '';
@@ -62,7 +63,7 @@ include __DIR__ . '/includes/header.php';
             <div class="grid book-grid">
                 <?php foreach ($books as $book): ?>
                     <article class="panel">
-                        <img src="<?= htmlspecialchars($book['cover_url']) ?>" alt="" class="book-cover">
+                        <img src="<?= htmlspecialchars(book_cover_src($book['cover_url'])) ?>" alt="<?= htmlspecialchars($book['title']) ?>" class="book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';">
                         <span class="tag"><?= htmlspecialchars($book['category']) ?></span>
                         <h2><?= htmlspecialchars($book['title']) ?></h2>
                         <p class="muted"><?= htmlspecialchars($book['author']) ?></p>
@@ -94,6 +95,9 @@ include __DIR__ . '/includes/header.php';
                 <label>Inventory <input name="inventory" type="number" min="0" value="<?= htmlspecialchars((string) ($editing['inventory'] ?? 0)) ?>" required></label>
                 <label>Cover URL <input name="cover_url" value="<?= htmlspecialchars($editing['cover_url'] ?? '') ?>"></label>
                 <label>Description <textarea name="description" required><?= htmlspecialchars($editing['description'] ?? '') ?></textarea></label>
+                <?php if (!empty($editing['cover_url'])): ?>
+                    <img src="<?= htmlspecialchars(book_cover_src($editing['cover_url'])) ?>" alt="<?= htmlspecialchars($editing['title'] ?? 'Book cover preview') ?>" class="book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';">
+                <?php endif; ?>
                 <button type="submit"><?= $editing ? 'Update Book' : 'Add Book' ?></button>
             </form>
         </aside>

@@ -42,9 +42,15 @@ include __DIR__ . '/includes/header.php';
             <form method="post">
                 <?= csrf_field() ?>
                 <label>Email <input name="email" type="email" required></label>
-                <label>Password <input name="password" type="password" required></label>
+                <label>Password
+                    <div class="password-field">
+                        <input name="password" type="password" required data-password-input>
+                        <button type="button" class="password-toggle" data-password-toggle>Show</button>
+                    </div>
+                </label>
                 <button type="submit">Enter Admin Panel</button>
             </form>
+            <p><a href="forgot-password.php">Forgot Password?</a></p>
         </div>
     </div>
 </section>

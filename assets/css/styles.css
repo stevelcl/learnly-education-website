@@ -165,6 +165,28 @@ main {
     font-size: 1.15rem;
 }
 
+.page-tools {
+    padding-top: 1rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(123, 149, 196, 0.18);
+    color: var(--brand-strong);
+    font-weight: 800;
+    box-shadow: var(--shadow-soft);
+}
+
+.back-link:hover {
+    color: var(--brand-strong);
+}
+
 .hero {
     position: relative;
     overflow: hidden;
@@ -632,6 +654,29 @@ textarea:focus {
 textarea {
     min-height: 130px;
     resize: vertical;
+}
+
+.password-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.password-toggle {
+    min-height: 42px;
+    padding: 0.65rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--brand-strong);
+    border: 1px solid rgba(123, 149, 196, 0.22);
+    box-shadow: none;
+}
+
+.password-toggle:hover {
+    background: rgba(237, 244, 255, 0.98);
+    color: var(--brand-strong);
+    box-shadow: none;
 }
 
 .checkbox {

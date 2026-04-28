@@ -7,6 +7,15 @@ require_once __DIR__ . '/cart.php';
 
 $pageTitle = $pageTitle ?? 'Learnly';
 $user = current_user();
+$showBackButton = $showBackButton ?? ($pageTitle !== 'Home');
+$backTarget = 'index.php';
+if (!empty($_SERVER['HTTP_REFERER'])) {
+    $referrer = $_SERVER['HTTP_REFERER'];
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host !== '' && str_contains($referrer, $host)) {
+        $backTarget = $referrer;
+    }
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -45,3 +54,10 @@ $user = current_user();
         </nav>
     </header>
     <main>
+        <?php if ($showBackButton): ?>
+            <div class="page-tools">
+                <div class="container">
+                    <a class="back-link" href="<?= htmlspecialchars($backTarget) ?>">&larr; Back</a>
+                </div>
+            </div>
+        <?php endif; ?>

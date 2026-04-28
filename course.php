@@ -38,7 +38,7 @@ include __DIR__ . '/includes/header.php';
     <div class="container layout">
         <div>
             <h1><?= htmlspecialchars($course['title']) ?></h1>
-            <p class="muted"><?= htmlspecialchars($course['subject']) ?> · <?= htmlspecialchars($course['level']) ?></p>
+            <p class="muted"><?= htmlspecialchars($course['subject']) ?> | <?= htmlspecialchars($course['level']) ?></p>
             <p><?= htmlspecialchars($course['description']) ?></p>
             <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
 
@@ -90,4 +90,3 @@ include __DIR__ . '/includes/header.php';
 </section>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
-

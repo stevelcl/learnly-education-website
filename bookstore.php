@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/cart.php';
 require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/media.php';
 
 $message = '';
 
@@ -61,7 +62,7 @@ include __DIR__ . '/includes/header.php';
         <div class="grid book-grid">
             <?php foreach ($books as $book): ?>
                 <article class="card">
-                    <img src="<?= htmlspecialchars($book['cover_url']) ?>" alt="" class="book-cover">
+                    <img src="<?= htmlspecialchars(book_cover_src($book['cover_url'])) ?>" alt="<?= htmlspecialchars($book['title']) ?>" class="book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';">
                     <span class="tag"><?= htmlspecialchars($book['category']) ?></span>
                     <h2><?= htmlspecialchars($book['title']) ?></h2>
                     <p class="muted"><?= htmlspecialchars($book['author']) ?></p>
