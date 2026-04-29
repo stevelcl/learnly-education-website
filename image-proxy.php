@@ -20,12 +20,31 @@ $context = stream_context_create([
 ]);
 
 $data = @file_get_contents($src, false, $context);
+if ($data === false && function_exists('curl_init')) {
+    $ch = curl_init($src);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 12,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_USERAGENT => 'LearnlyImageProxy/1.0',
+    ]);
+    $data = curl_exec($ch);
+    $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE) ?: '';
+    curl_close($ch);
+    if ($data !== false && $contentType !== '') {
+        $mime = trim(explode(';', $contentType)[0]);
+    }
+}
+
 if ($data === false) {
     http_response_code(404);
     exit('Image unavailable.');
 }
 
-$mime = 'image/jpeg';
+$mime = $mime ?? 'image/jpeg';
 if (!empty($http_response_header)) {
     foreach ($http_response_header as $header) {
         if (stripos($header, 'Content-Type:') === 0) {

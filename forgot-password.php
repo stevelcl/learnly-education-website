@@ -8,29 +8,29 @@ $error = '';
 $message = '';
 $step = $_POST['step'] ?? 'request';
 $generatedToken = '';
+$requestEmail = trim($_POST['request_email'] ?? '');
+$resetEmail = trim($_POST['reset_email'] ?? '');
+$resetToken = trim($_POST['token'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
 
     if ($step === 'request') {
-        $email = strtolower(trim($_POST['email'] ?? ''));
+        $email = strtolower($requestEmail);
         $user = fetch_one('SELECT id FROM users WHERE email = ?', [$email]);
 
         if (!$user) {
             $error = 'We could not find an account with that email.';
         } else {
             $generatedToken = strtoupper(bin2hex(random_bytes(4)));
-            $expiresAt = date('Y-m-d H:i:s', time() + 3600);
-            $stmt = db()->prepare('INSERT INTO password_resets (user_id, reset_token, expires_at) VALUES (?, ?, ?)');
-            $stmt->execute([(int) $user['id'], $generatedToken, $expiresAt]);
+            $stmt = db()->prepare('INSERT INTO password_resets (user_id, reset_token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))');
+            $stmt->execute([(int) $user['id'], $generatedToken]);
             $message = 'Reset code created. For this coursework demo, use the code below to set a new password.';
-            $step = 'reset';
+            $resetEmail = $email;
         }
-    }
-
-    if ($step === 'reset') {
-        $email = strtolower(trim($_POST['email'] ?? ''));
-        $token = strtoupper(trim($_POST['token'] ?? ''));
+    } elseif ($step === 'reset') {
+        $email = strtolower($resetEmail);
+        $token = strtoupper($resetToken);
         $password = $_POST['password'] ?? '';
         $user = fetch_one('SELECT id FROM users WHERE email = ?', [$email]);
 
@@ -50,7 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mark = db()->prepare('UPDATE password_resets SET used_at = NOW() WHERE id = ?');
                 $mark->execute([(int) $reset['id']]);
                 $message = 'Password updated. You can now log in with the new password.';
-                $step = 'request';
+                $resetEmail = '';
+                $resetToken = '';
             }
         }
     }
@@ -79,7 +80,7 @@ include __DIR__ . '/includes/header.php';
                     <form method="post">
                         <?= csrf_field() ?>
                         <input type="hidden" name="step" value="request">
-                        <label>Email <input name="email" type="email" required></label>
+                        <label>Email <input name="request_email" type="email" value="<?= htmlspecialchars($requestEmail) ?>" required></label>
                         <button type="submit">Generate Code</button>
                     </form>
                 </div>
@@ -89,8 +90,8 @@ include __DIR__ . '/includes/header.php';
                     <form method="post">
                         <?= csrf_field() ?>
                         <input type="hidden" name="step" value="reset">
-                        <label>Email <input name="email" type="email" required></label>
-                        <label>Reset Code <input name="token" required></label>
+                        <label>Email <input name="reset_email" type="email" value="<?= htmlspecialchars($resetEmail) ?>" required></label>
+                        <label>Reset Code <input name="token" value="<?= htmlspecialchars($resetToken) ?>" required></label>
                         <label>New Password
                             <div class="password-field">
                                 <input name="password" type="password" minlength="8" required data-password-input>

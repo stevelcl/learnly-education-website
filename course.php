@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/media.php';
 
 $courseId = (int) ($_GET['id'] ?? 0);
 $course = fetch_one('SELECT * FROM courses WHERE id = ?', [$courseId]);
@@ -49,7 +50,7 @@ include __DIR__ . '/includes/header.php';
                     <p><?= nl2br(htmlspecialchars($resource['content'])) ?></p>
                     <?php if ($resource['resource_type'] === 'video' && $resource['resource_url']): ?>
                         <div class="video-frame">
-                            <iframe src="<?= htmlspecialchars($resource['resource_url']) ?>" title="<?= htmlspecialchars($resource['title']) ?>" allowfullscreen></iframe>
+                            <iframe src="<?= htmlspecialchars(video_embed_src($resource['resource_url'])) ?>" title="<?= htmlspecialchars($resource['title']) ?>" allowfullscreen></iframe>
                         </div>
                     <?php endif; ?>
                 </article>

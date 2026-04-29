@@ -9,13 +9,6 @@ $pageTitle = $pageTitle ?? 'Learnly';
 $user = current_user();
 $showBackButton = $showBackButton ?? ($pageTitle !== 'Home');
 $backTarget = 'index.php';
-if (!empty($_SERVER['HTTP_REFERER'])) {
-    $referrer = $_SERVER['HTTP_REFERER'];
-    $host = $_SERVER['HTTP_HOST'] ?? '';
-    if ($host !== '' && str_contains($referrer, $host)) {
-        $backTarget = $referrer;
-    }
-}
 ?>
 <!doctype html>
 <html lang="en">

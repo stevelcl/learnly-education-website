@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/media.php';
 $user = require_admin();
 
 $message = '';
@@ -65,11 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $videoTitle = trim($_POST['video_title'] ?? '');
         $videoUrl = trim($_POST['video_url'] ?? '');
         $videoDescription = trim($_POST['video_description'] ?? '');
-        if ($videoTitle !== '' && $videoUrl !== '') {
+        $embedUrl = video_embed_src($videoUrl);
+        if ($videoTitle !== '' && $embedUrl !== '') {
             $resourceStmt = db()->prepare(
                 'INSERT INTO course_resources (course_id, title, resource_type, content, resource_url, sort_order) VALUES (?, ?, "video", ?, ?, ?)'
             );
-            $resourceStmt->execute([$courseId, $videoTitle, $videoDescription ?: 'Video lesson resource.', $videoUrl, ((int) $_POST['sort_order'] ?: 2)]);
+            $resourceStmt->execute([$courseId, $videoTitle, $videoDescription ?: 'Video lesson resource.', $embedUrl, ((int) $_POST['sort_order'] ?: 2)]);
             $message = 'Video resource added.';
         }
     }
@@ -189,7 +191,7 @@ include __DIR__ . '/includes/header.php';
                     <input type="hidden" name="action" value="add_video">
                     <input type="hidden" name="course_id" value="<?= (int) $editing['id'] ?>">
                     <label>Video Title <input name="video_title" required></label>
-                    <label>Video URL <input name="video_url" placeholder="https://www.youtube.com/embed/..." required></label>
+                    <label>Video URL <input name="video_url" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." required></label>
                     <label>Video Description <textarea name="video_description"></textarea></label>
                     <label>Sort Order <input type="number" name="sort_order" value="2" min="1"></label>
                     <button type="submit">Add Video</button>

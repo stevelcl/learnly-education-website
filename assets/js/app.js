@@ -1,25 +1,41 @@
-const navToggle = document.querySelector('[data-nav-toggle]');
-const nav = document.querySelector('[data-nav]');
+document.addEventListener('DOMContentLoaded', () => {
+  const navToggle = document.querySelector('[data-nav-toggle]');
+  const nav = document.querySelector('[data-nav]');
 
-if (navToggle && nav) {
-  navToggle.addEventListener('click', () => {
-    nav.classList.toggle('open');
-  });
-}
+  if (navToggle && nav) {
+    navToggle.addEventListener('click', () => {
+      nav.classList.toggle('open');
+    });
+  }
 
-document.querySelectorAll('[data-confirm]').forEach((button) => {
-  button.addEventListener('click', (event) => {
-    if (!window.confirm(button.dataset.confirm)) {
-      event.preventDefault();
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
     }
-  });
-});
 
-document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
-  toggle.addEventListener('click', () => {
+    const confirmButton = target.closest('[data-confirm]');
+    if (confirmButton instanceof HTMLElement) {
+      const message = confirmButton.getAttribute('data-confirm') || '';
+      if (message !== '' && !window.confirm(message)) {
+        event.preventDefault();
+        return;
+      }
+    }
+
+    const toggle = target.closest('[data-password-toggle]');
+    if (!(toggle instanceof HTMLElement)) {
+      return;
+    }
+
+    event.preventDefault();
     const wrapper = toggle.closest('.password-field');
-    const input = wrapper?.querySelector('[data-password-input]');
-    if (!input) {
+    if (!(wrapper instanceof HTMLElement)) {
+      return;
+    }
+
+    const input = wrapper.querySelector('[data-password-input]');
+    if (!(input instanceof HTMLInputElement)) {
       return;
     }
 
