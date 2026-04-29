@@ -78,7 +78,7 @@ include __DIR__ . '/includes/header.php';
                     <tbody>
                     <?php foreach ($books as $book): ?>
                         <tr>
-                            <td><img src="<?= htmlspecialchars(book_cover_src($book['cover_url'])) ?>" alt="<?= htmlspecialchars($book['title']) ?>" class="book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';"><?= htmlspecialchars($book['title']) ?></td>
+                            <td><img src="<?= htmlspecialchars(book_cover_src($book['cover_url'])) ?>" alt="<?= htmlspecialchars($book['title']) ?>" class="cart-book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';"><?= htmlspecialchars($book['title']) ?></td>
                             <td><?= (int) $book['quantity'] ?></td>
                             <td>RM <?= number_format((float) $book['subtotal'], 2) ?></td>
                         </tr>

@@ -5,9 +5,26 @@ require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/includes/media.php';
 $user = require_admin();
 
-$message = '';
+$noticeMap = [
+    'course_created' => 'Course added. You can now add notes, video, and quizzes below.',
+    'course_updated' => 'Course updated.',
+    'course_deleted' => 'Course deleted.',
+    'resource_deleted' => 'Resource deleted.',
+    'quiz_deleted' => 'Quiz question deleted.',
+    'note_added' => 'Lecture note added.',
+    'video_added' => 'Video resource added.',
+    'quiz_added' => 'Quiz question added.',
+];
+$message = $noticeMap[$_GET['notice'] ?? ''] ?? '';
+
 $editingId = (int) ($_GET['edit'] ?? 0);
 $editing = $editingId ? fetch_one('SELECT * FROM courses WHERE id = ?', [$editingId]) : null;
+$formValues = [
+    'title' => $editing['title'] ?? '',
+    'subject' => $editing['subject'] ?? '',
+    'description' => $editing['description'] ?? '',
+    'level' => $editing['level'] ?? '',
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -16,36 +33,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $stmt = db()->prepare('DELETE FROM courses WHERE id = ?');
         $stmt->execute([(int) $_POST['course_id']]);
-        $message = 'Course deleted.';
-        $editing = null;
-        $editingId = 0;
-    } elseif ($action === 'delete_resource') {
+        header('Location: admin-courses.php?notice=course_deleted');
+        exit;
+    }
+
+    if ($action === 'delete_resource') {
+        $courseId = (int) $_POST['course_id'];
         $stmt = db()->prepare('DELETE FROM course_resources WHERE id = ?');
         $stmt->execute([(int) $_POST['resource_id']]);
-        $message = 'Resource deleted.';
-    } elseif ($action === 'delete_quiz') {
+        header('Location: admin-courses.php?edit=' . $courseId . '&notice=resource_deleted#resources');
+        exit;
+    }
+
+    if ($action === 'delete_quiz') {
+        $courseId = (int) $_POST['course_id'];
         $stmt = db()->prepare('DELETE FROM quiz_questions WHERE id = ?');
         $stmt->execute([(int) $_POST['quiz_id']]);
-        $message = 'Quiz question deleted.';
-    } else {
-        $title = trim($_POST['title'] ?? '');
-        $subject = trim($_POST['subject'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-        $level = trim($_POST['level'] ?? '');
-
-        if ($title !== '' && $subject !== '' && $description !== '' && $level !== '') {
-            if ($action === 'update') {
-                $stmt = db()->prepare('UPDATE courses SET title = ?, subject = ?, description = ?, level = ? WHERE id = ?');
-                $stmt->execute([$title, $subject, $description, $level, (int) $_POST['course_id']]);
-                $message = 'Course updated.';
-            } else {
-                $stmt = db()->prepare('INSERT INTO courses (title, subject, description, level) VALUES (?, ?, ?, ?)');
-                $stmt->execute([$title, $subject, $description, $level]);
-                $editingId = (int) db()->lastInsertId();
-                $editing = fetch_one('SELECT * FROM courses WHERE id = ?', [$editingId]);
-                $message = 'Course added. You can now add notes, video, and quizzes below.';
-            }
-        }
+        header('Location: admin-courses.php?edit=' . $courseId . '&notice=quiz_deleted#resources');
+        exit;
     }
 
     if ($action === 'add_note') {
@@ -57,8 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'INSERT INTO course_resources (course_id, title, resource_type, content, sort_order) VALUES (?, ?, "note", ?, ?)'
             );
             $resourceStmt->execute([$courseId, $noteTitle, $noteContent, ((int) $_POST['sort_order'] ?: 1)]);
-            $message = 'Lecture note added.';
         }
+        header('Location: admin-courses.php?edit=' . $courseId . '&notice=note_added#resources');
+        exit;
     }
 
     if ($action === 'add_video') {
@@ -72,8 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'INSERT INTO course_resources (course_id, title, resource_type, content, resource_url, sort_order) VALUES (?, ?, "video", ?, ?, ?)'
             );
             $resourceStmt->execute([$courseId, $videoTitle, $videoDescription ?: 'Video lesson resource.', $embedUrl, ((int) $_POST['sort_order'] ?: 2)]);
-            $message = 'Video resource added.';
         }
+        header('Location: admin-courses.php?edit=' . $courseId . '&notice=video_added#resources');
+        exit;
     }
 
     if ($action === 'add_quiz') {
@@ -99,12 +106,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'INSERT INTO quiz_questions (course_id, question, option_a, option_b, option_c, correct_option) VALUES (?, ?, ?, ?, ?, ?)'
             );
             $quizStmt->execute([$courseId, $quizQuestion, $optionA, $optionB, $optionC, $correctOption]);
-            $message = 'Quiz question added.';
         }
+        header('Location: admin-courses.php?edit=' . $courseId . '&notice=quiz_added#resources');
+        exit;
     }
 
-    if ($editingId > 0) {
-        $editing = fetch_one('SELECT * FROM courses WHERE id = ?', [$editingId]);
+    $title = trim($_POST['title'] ?? '');
+    $subject = trim($_POST['subject'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $level = trim($_POST['level'] ?? '');
+    $formValues = [
+        'title' => $title,
+        'subject' => $subject,
+        'description' => $description,
+        'level' => $level,
+    ];
+
+    if ($title !== '' && $subject !== '' && $description !== '' && $level !== '') {
+        if ($action === 'update') {
+            $courseId = (int) $_POST['course_id'];
+            $stmt = db()->prepare('UPDATE courses SET title = ?, subject = ?, description = ?, level = ? WHERE id = ?');
+            $stmt->execute([$title, $subject, $description, $level, $courseId]);
+            header('Location: admin-courses.php?edit=' . $courseId . '&notice=course_updated');
+            exit;
+        }
+
+        $stmt = db()->prepare('INSERT INTO courses (title, subject, description, level) VALUES (?, ?, ?, ?)');
+        $stmt->execute([$title, $subject, $description, $level]);
+        $newId = (int) db()->lastInsertId();
+        header('Location: admin-courses.php?edit=' . $newId . '&notice=course_created#resources');
+        exit;
     }
 }
 
@@ -166,16 +197,19 @@ include __DIR__ . '/includes/header.php';
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="<?= $editing ? 'update' : 'create' ?>">
                 <input type="hidden" name="course_id" value="<?= (int) ($editing['id'] ?? 0) ?>">
-                <label>Title <input name="title" value="<?= htmlspecialchars($editing['title'] ?? '') ?>" required></label>
-                <label>Subject <input name="subject" value="<?= htmlspecialchars($editing['subject'] ?? '') ?>" required></label>
-                <label>Level <input name="level" value="<?= htmlspecialchars($editing['level'] ?? '') ?>" required></label>
-                <label>Description <textarea name="description" required><?= htmlspecialchars($editing['description'] ?? '') ?></textarea></label>
-                <button type="submit"><?= $editing ? 'Update Course' : 'Add Course' ?></button>
+                <label>Title <input name="title" value="<?= htmlspecialchars($formValues['title']) ?>" required></label>
+                <label>Subject <input name="subject" value="<?= htmlspecialchars($formValues['subject']) ?>" required></label>
+                <label>Level <input name="level" value="<?= htmlspecialchars($formValues['level']) ?>" required></label>
+                <label>Description <textarea name="description" required><?= htmlspecialchars($formValues['description']) ?></textarea></label>
+                <div class="actions">
+                    <button type="submit"><?= $editing ? 'Update Course' : 'Add Course' ?></button>
+                    <a class="button ghost" href="admin-courses.php">Clear All</a>
+                </div>
             </form>
 
             <?php if ($editing): ?>
                 <hr>
-                <h2>Add Learning Resources</h2>
+                <h2 id="resources">Add Learning Resources</h2>
                 <form method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="add_note">
@@ -243,6 +277,7 @@ include __DIR__ . '/includes/header.php';
                     <form method="post" class="inline-form">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="delete_resource">
+                        <input type="hidden" name="course_id" value="<?= (int) $editing['id'] ?>">
                         <input type="hidden" name="resource_id" value="<?= (int) $resource['id'] ?>">
                         <button class="button small danger" type="submit">Delete Resource</button>
                     </form>
@@ -265,6 +300,7 @@ include __DIR__ . '/includes/header.php';
                     <form method="post" class="inline-form">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="delete_quiz">
+                        <input type="hidden" name="course_id" value="<?= (int) $editing['id'] ?>">
                         <input type="hidden" name="quiz_id" value="<?= (int) $quiz['id'] ?>">
                         <button class="button small danger" type="submit">Delete Question</button>
                     </form>

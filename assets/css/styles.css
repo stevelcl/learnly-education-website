@@ -587,6 +587,15 @@ button:hover {
     margin-bottom: 0.65rem;
 }
 
+.cart-book-cover {
+    width: 60px;
+    height: 78px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-right: 0.8rem;
+    vertical-align: middle;
+}
+
 .meta,
 .muted {
     color: var(--muted);
