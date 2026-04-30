@@ -74,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $books = fetch_all('SELECT * FROM books ORDER BY title');
+$lowStockBooks = fetch_all('SELECT title, inventory FROM books WHERE inventory <= 5 ORDER BY inventory ASC, title ASC');
 $pageTitle = 'Manage Books';
 include __DIR__ . '/includes/header.php';
 ?>
@@ -89,6 +90,14 @@ include __DIR__ . '/includes/header.php';
                 <a class="button ghost" href="admin-dashboard.php">Back to Admin</a>
             </div>
             <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
+            <?php if ($lowStockBooks): ?>
+                <div class="alert error" style="margin-bottom: 1rem;">
+                    <strong>Low-stock alert:</strong>
+                    <?php foreach ($lowStockBooks as $lowStockBook): ?>
+                        <div><?= htmlspecialchars($lowStockBook['title']) ?> - <?= (int) $lowStockBook['inventory'] ?> left</div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
             <div class="grid book-grid">
                 <?php foreach ($books as $book): ?>
                     <article class="panel">

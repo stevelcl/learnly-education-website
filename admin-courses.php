@@ -6,14 +6,12 @@ require_once __DIR__ . '/includes/media.php';
 $user = require_admin();
 
 $noticeMap = [
-    'course_created' => 'Course added. You can now add notes, video, and quizzes below.',
+    'course_created' => 'Course added. You can now build the learning flow below.',
     'course_updated' => 'Course updated.',
     'course_deleted' => 'Course deleted.',
     'resource_deleted' => 'Resource deleted.',
     'quiz_deleted' => 'Quiz question deleted.',
-    'note_added' => 'Lecture note added.',
-    'video_added' => 'Video resource added.',
-    'quiz_added' => 'Quiz question added.',
+    'resource_added' => 'Learning resource added.',
 ];
 $message = $noticeMap[$_GET['notice'] ?? ''] ?? '';
 
@@ -53,61 +51,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    if ($action === 'add_note') {
+    if ($action === 'add_resource') {
         $courseId = (int) $_POST['course_id'];
-        $noteTitle = trim($_POST['note_title'] ?? '');
-        $noteContent = trim($_POST['note_content'] ?? '');
-        if ($noteTitle !== '' && $noteContent !== '') {
-            $resourceStmt = db()->prepare(
-                'INSERT INTO course_resources (course_id, title, resource_type, content, sort_order) VALUES (?, ?, "note", ?, ?)'
-            );
-            $resourceStmt->execute([$courseId, $noteTitle, $noteContent, ((int) $_POST['sort_order'] ?: 1)]);
-        }
-        header('Location: admin-courses.php?edit=' . $courseId . '&notice=note_added#resources');
-        exit;
-    }
+        $resourceType = $_POST['resource_type'] ?? 'note';
+        $sortOrder = max(1, (int) ($_POST['sort_order'] ?? 1));
 
-    if ($action === 'add_video') {
-        $courseId = (int) $_POST['course_id'];
-        $videoTitle = trim($_POST['video_title'] ?? '');
-        $videoUrl = trim($_POST['video_url'] ?? '');
-        $videoDescription = trim($_POST['video_description'] ?? '');
-        $embedUrl = video_embed_src($videoUrl);
-        if ($videoTitle !== '' && $embedUrl !== '') {
-            $resourceStmt = db()->prepare(
-                'INSERT INTO course_resources (course_id, title, resource_type, content, resource_url, sort_order) VALUES (?, ?, "video", ?, ?, ?)'
-            );
-            $resourceStmt->execute([$courseId, $videoTitle, $videoDescription ?: 'Video lesson resource.', $embedUrl, ((int) $_POST['sort_order'] ?: 2)]);
+        if ($resourceType === 'note') {
+            $title = trim($_POST['note_title'] ?? '');
+            $content = trim($_POST['note_content'] ?? '');
+            if ($title !== '' && $content !== '') {
+                $stmt = db()->prepare(
+                    'INSERT INTO course_resources (course_id, title, resource_type, content, sort_order) VALUES (?, ?, "note", ?, ?)'
+                );
+                $stmt->execute([$courseId, $title, $content, $sortOrder]);
+            }
         }
-        header('Location: admin-courses.php?edit=' . $courseId . '&notice=video_added#resources');
-        exit;
-    }
 
-    if ($action === 'add_quiz') {
-        $courseId = (int) $_POST['course_id'];
-        $quizQuestion = trim($_POST['quiz_question'] ?? '');
-        $optionA = trim($_POST['option_a'] ?? '');
-        $optionB = trim($_POST['option_b'] ?? '');
-        $optionC = trim($_POST['option_c'] ?? '');
-        $correctOption = trim($_POST['correct_option'] ?? '');
-        if (
-            $quizQuestion !== '' &&
-            $optionA !== '' &&
-            $optionB !== '' &&
-            $optionC !== '' &&
-            in_array($correctOption, ['A', 'B', 'C'], true)
-        ) {
-            $resourceStmt = db()->prepare(
-                'INSERT INTO course_resources (course_id, title, resource_type, content, sort_order) VALUES (?, ?, "quiz", ?, ?)'
-            );
-            $resourceStmt->execute([$courseId, 'Interactive Quiz', 'Quiz generated from admin course setup.', ((int) $_POST['sort_order'] ?: 3)]);
-
-            $quizStmt = db()->prepare(
-                'INSERT INTO quiz_questions (course_id, question, option_a, option_b, option_c, correct_option) VALUES (?, ?, ?, ?, ?, ?)'
-            );
-            $quizStmt->execute([$courseId, $quizQuestion, $optionA, $optionB, $optionC, $correctOption]);
+        if ($resourceType === 'video') {
+            $title = trim($_POST['video_title'] ?? '');
+            $description = trim($_POST['video_description'] ?? '');
+            $videoUrl = video_embed_src(trim($_POST['video_url'] ?? ''));
+            if ($title !== '' && $videoUrl !== '') {
+                $stmt = db()->prepare(
+                    'INSERT INTO course_resources (course_id, title, resource_type, content, resource_url, sort_order) VALUES (?, ?, "video", ?, ?, ?)'
+                );
+                $stmt->execute([$courseId, $title, $description ?: 'Video lesson resource.', $videoUrl, $sortOrder]);
+            }
         }
-        header('Location: admin-courses.php?edit=' . $courseId . '&notice=quiz_added#resources');
+
+        if ($resourceType === 'quiz') {
+            $quizTitle = trim($_POST['quiz_title'] ?? '');
+            $quizDescription = trim($_POST['quiz_description'] ?? '');
+            $questionText = trim($_POST['quiz_question'] ?? '');
+            $optionA = trim($_POST['option_a'] ?? '');
+            $optionB = trim($_POST['option_b'] ?? '');
+            $optionC = trim($_POST['option_c'] ?? '');
+            $correctOption = trim($_POST['correct_option'] ?? '');
+
+            if (
+                $questionText !== '' &&
+                $optionA !== '' &&
+                $optionB !== '' &&
+                $optionC !== '' &&
+                in_array($correctOption, ['A', 'B', 'C'], true)
+            ) {
+                $quizResource = fetch_one(
+                    'SELECT id FROM course_resources WHERE course_id = ? AND resource_type = "quiz" ORDER BY id LIMIT 1',
+                    [$courseId]
+                );
+
+                if (!$quizResource) {
+                    $stmt = db()->prepare(
+                        'INSERT INTO course_resources (course_id, title, resource_type, content, sort_order) VALUES (?, ?, "quiz", ?, ?)'
+                    );
+                    $stmt->execute([
+                        $courseId,
+                        $quizTitle !== '' ? $quizTitle : 'Interactive Quiz',
+                        $quizDescription !== '' ? $quizDescription : 'Quiz activity for this course.',
+                        $sortOrder,
+                    ]);
+                }
+
+                $quizStmt = db()->prepare(
+                    'INSERT INTO quiz_questions (course_id, question, option_a, option_b, option_c, correct_option) VALUES (?, ?, ?, ?, ?, ?)'
+                );
+                $quizStmt->execute([$courseId, $questionText, $optionA, $optionB, $optionC, $correctOption]);
+            }
+        }
+
+        header('Location: admin-courses.php?edit=' . $courseId . '&notice=resource_added#resources');
         exit;
     }
 
@@ -178,7 +190,7 @@ include __DIR__ . '/includes/header.php';
                         <p class="muted"><?= htmlspecialchars($course['level']) ?></p>
                         <div class="actions">
                             <a class="button small ghost" href="admin-courses.php?edit=<?= (int) $course['id'] ?>">Edit</a>
-                            <a class="button small ghost" href="course.php?id=<?= (int) $course['id'] ?>">View</a>
+                            <a class="button small ghost" href="course.php?id=<?= (int) $course['id'] ?>&amp;admin_preview=1">Admin Preview</a>
                             <form method="post" class="inline-form">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="action" value="delete">
@@ -210,45 +222,48 @@ include __DIR__ . '/includes/header.php';
             <?php if ($editing): ?>
                 <hr>
                 <h2 id="resources">Add Learning Resources</h2>
-                <form method="post">
+                <form method="post" class="resource-builder">
                     <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="add_note">
+                    <input type="hidden" name="action" value="add_resource">
                     <input type="hidden" name="course_id" value="<?= (int) $editing['id'] ?>">
-                    <label>Lecture Note Title <input name="note_title" required></label>
-                    <label>Lecture Note Content <textarea name="note_content" required></textarea></label>
-                    <label>Sort Order <input type="number" name="sort_order" value="1" min="1"></label>
-                    <button type="submit">Add Note</button>
-                </form>
-
-                <form method="post" style="margin-top: 1rem;">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="add_video">
-                    <input type="hidden" name="course_id" value="<?= (int) $editing['id'] ?>">
-                    <label>Video Title <input name="video_title" required></label>
-                    <label>Video URL <input name="video_url" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." required></label>
-                    <label>Video Description <textarea name="video_description"></textarea></label>
-                    <label>Sort Order <input type="number" name="sort_order" value="2" min="1"></label>
-                    <button type="submit">Add Video</button>
-                </form>
-
-                <form method="post" style="margin-top: 1rem;">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="add_quiz">
-                    <input type="hidden" name="course_id" value="<?= (int) $editing['id'] ?>">
-                    <label>Quiz Question <input name="quiz_question" required></label>
-                    <label>Option A <input name="option_a" required></label>
-                    <label>Option B <input name="option_b" required></label>
-                    <label>Option C <input name="option_c" required></label>
-                    <label>Correct Option
-                        <select name="correct_option" required>
-                            <option value="">Choose one</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
+                    <label>Resource Type
+                        <select name="resource_type" data-resource-select>
+                            <option value="note">Lecture Note</option>
+                            <option value="video">Video</option>
+                            <option value="quiz">Quiz Question</option>
                         </select>
                     </label>
-                    <label>Sort Order <input type="number" name="sort_order" value="3" min="1"></label>
-                    <button type="submit">Add Quiz</button>
+
+                    <div data-resource-fields="note">
+                        <label>Lecture Note Title <input name="note_title"></label>
+                        <label>Lecture Note Content <textarea name="note_content"></textarea></label>
+                    </div>
+
+                    <div data-resource-fields="video" hidden>
+                        <label>Video Title <input name="video_title"></label>
+                        <label>Video URL <input name="video_url" placeholder="https://www.youtube.com/watch?v=..."></label>
+                        <label>Video Description <textarea name="video_description"></textarea></label>
+                    </div>
+
+                    <div data-resource-fields="quiz" hidden>
+                        <label>Quiz Title <input name="quiz_title" placeholder="Interactive Quiz"></label>
+                        <label>Quiz Description <textarea name="quiz_description"></textarea></label>
+                        <label>Quiz Question <input name="quiz_question"></label>
+                        <label>Option A <input name="option_a"></label>
+                        <label>Option B <input name="option_b"></label>
+                        <label>Option C <input name="option_c"></label>
+                        <label>Correct Option
+                            <select name="correct_option">
+                                <option value="">Choose one</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <label>Sort Order <input type="number" name="sort_order" value="1" min="1"></label>
+                    <button type="submit">Add Resource</button>
                 </form>
             <?php endif; ?>
         </aside>

@@ -4,9 +4,26 @@ require_once __DIR__ . '/includes/auth.php';
 $user = require_login();
 
 $progressRows = fetch_all(
-    'SELECT c.id, c.title, c.subject, up.progress_percent, up.saved, up.updated_at
+    'SELECT c.id, c.title, c.subject, up.saved, up.updated_at,
+            COALESCE(cp.completed_items, 0) AS completed_items,
+            COALESCE(ct.total_items, 0) AS total_items,
+            COALESCE(up.progress_percent, 0) AS progress_percent
      FROM user_progress up
      JOIN courses c ON c.id = up.course_id
+     LEFT JOIN (
+        SELECT user_id, course_id, COUNT(*) AS completed_items
+        FROM course_item_progress
+        GROUP BY user_id, course_id
+     ) cp ON cp.user_id = up.user_id AND cp.course_id = up.course_id
+     LEFT JOIN (
+        SELECT grouped.course_id, COUNT(*) AS total_items
+        FROM (
+            SELECT course_id, id FROM course_resources WHERE resource_type <> "quiz"
+            UNION ALL
+            SELECT course_id, id FROM quiz_questions
+        ) grouped
+        GROUP BY grouped.course_id
+     ) ct ON ct.course_id = up.course_id
      WHERE up.user_id = ?
      ORDER BY up.updated_at DESC',
     [$user['id']]
@@ -31,7 +48,7 @@ include __DIR__ . '/includes/header.php';
                     <h3><a href="course.php?id=<?= (int) $row['id'] ?>"><?= htmlspecialchars($row['title']) ?></a></h3>
                     <p class="muted"><?= htmlspecialchars($row['subject']) ?> <?= $row['saved'] ? '| Saved' : '' ?></p>
                     <div class="progress"><span style="width: <?= (int) $row['progress_percent'] ?>%"></span></div>
-                    <p><?= (int) $row['progress_percent'] ?>% complete</p>
+                    <p><?= (int) $row['progress_percent'] ?>% complete | <?= (int) $row['completed_items'] ?> / <?= (int) $row['total_items'] ?> steps done</p>
                 <?php endforeach; ?>
             </article>
 

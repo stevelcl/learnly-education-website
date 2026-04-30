@@ -1,11 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
   const navToggle = document.querySelector('[data-nav-toggle]');
   const nav = document.querySelector('[data-nav]');
+  const resourceSelect = document.querySelector('[data-resource-select]');
+  const resourcePanels = document.querySelectorAll('[data-resource-fields]');
 
   if (navToggle && nav) {
     navToggle.addEventListener('click', () => {
       nav.classList.toggle('open');
     });
+  }
+
+  if (resourceSelect && resourcePanels.length > 0) {
+    const syncResourcePanels = () => {
+      resourcePanels.forEach((panel) => {
+        if (!(panel instanceof HTMLElement)) {
+          return;
+        }
+
+        const matches = panel.dataset.resourceFields === resourceSelect.value;
+        panel.hidden = !matches;
+
+        panel.querySelectorAll('input, textarea, select').forEach((field) => {
+          if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+            return;
+          }
+
+          if (matches) {
+            field.removeAttribute('disabled');
+          } else {
+            field.setAttribute('disabled', 'disabled');
+          }
+        });
+      });
+    };
+
+    syncResourcePanels();
+    resourceSelect.addEventListener('change', syncResourcePanels);
   }
 
   document.addEventListener('click', (event) => {

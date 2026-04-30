@@ -9,6 +9,8 @@ $user = require_login();
 $cart = cart_items();
 $error = '';
 $success = '';
+$address = trim($_POST['address'] ?? '');
+$paymentMethod = trim($_POST['payment_method'] ?? 'Online Banking');
 $books = [];
 $total = 0;
 
@@ -29,6 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Your cart is empty.';
     } else {
         try {
+            if ($address === '') {
+                throw new RuntimeException('Delivery address is required.');
+            }
+
             db()->beginTransaction();
             foreach ($books as $book) {
                 if ((int) $book['inventory'] < (int) $book['quantity']) {
@@ -36,8 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            $stmt = db()->prepare('INSERT INTO orders (user_id, total, status) VALUES (?, ?, "paid")');
-            $stmt->execute([$user['id'], $total]);
+            $stmt = db()->prepare('INSERT INTO orders (user_id, total, status, delivery_address, payment_method) VALUES (?, ?, "paid", ?, ?)');
+            $stmt->execute([$user['id'], $total, $address, $paymentMethod]);
             $orderId = (int) db()->lastInsertId();
 
             $itemStmt = db()->prepare('INSERT INTO order_items (order_id, book_id, quantity, unit_price) VALUES (?, ?, ?, ?)');
@@ -88,12 +94,12 @@ include __DIR__ . '/includes/header.php';
                 <h2>Total: RM <?= number_format($total, 2) ?></h2>
                 <form method="post">
                     <?= csrf_field() ?>
-                    <label>Delivery Address <textarea name="address" required></textarea></label>
+                    <label>Delivery Address <textarea name="address" required><?= htmlspecialchars($address) ?></textarea></label>
                     <label>Payment Method
                         <select name="payment_method" required>
-                            <option>Online Banking</option>
-                            <option>Credit/Debit Card</option>
-                            <option>Campus Pickup Payment</option>
+                            <option <?= $paymentMethod === 'Online Banking' ? 'selected' : '' ?>>Online Banking</option>
+                            <option <?= $paymentMethod === 'Credit/Debit Card' ? 'selected' : '' ?>>Credit/Debit Card</option>
+                            <option <?= $paymentMethod === 'Campus Pickup Payment' ? 'selected' : '' ?>>Campus Pickup Payment</option>
                         </select>
                     </label>
                     <button type="submit" data-confirm="Confirm checkout?">Place Order</button>

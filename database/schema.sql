@@ -6,7 +6,7 @@ CREATE TABLE users (
     name VARCHAR(120) NOT NULL,
     email VARCHAR(190) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('student', 'moderator', 'admin') NOT NULL DEFAULT 'student',
+    role ENUM('student', 'admin') NOT NULL DEFAULT 'student',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -63,6 +63,18 @@ CREATE TABLE user_progress (
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
 
+CREATE TABLE course_item_progress (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    course_id INT NOT NULL,
+    item_type ENUM('resource', 'quiz') NOT NULL,
+    item_id INT NOT NULL,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_course_item (user_id, course_id, item_type, item_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);
+
 CREATE TABLE forum_posts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -113,6 +125,8 @@ CREATE TABLE orders (
     user_id INT NOT NULL,
     total DECIMAL(10, 2) NOT NULL,
     status ENUM('paid', 'processing', 'cancelled') NOT NULL DEFAULT 'processing',
+    delivery_address TEXT,
+    payment_method VARCHAR(80),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

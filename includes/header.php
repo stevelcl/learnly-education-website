@@ -8,7 +8,7 @@ require_once __DIR__ . '/cart.php';
 $pageTitle = $pageTitle ?? 'Learnly';
 $user = current_user();
 $showBackButton = $showBackButton ?? ($pageTitle !== 'Home');
-$backTarget = 'index.php';
+$backTarget = $backTarget ?? 'index.php';
 ?>
 <!doctype html>
 <html lang="en">
@@ -28,6 +28,11 @@ $backTarget = 'index.php';
             <img src="assets/images/learnly-logo.png" alt="Learnly" class="brand-logo">
             <span class="brand-name">Learnly</span>
         </a>
+        <form class="site-search" method="get" action="search.php">
+            <label class="visually-hidden" for="site-search-input">Search Learnly</label>
+            <input id="site-search-input" type="search" name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" placeholder="Search courses, books, forum">
+            <button type="submit" class="button small secondary">Search</button>
+        </form>
         <button class="nav-toggle" type="button" aria-label="Toggle navigation" data-nav-toggle>&#9776;</button>
         <nav class="site-nav" data-nav>
             <a href="courses.php">Courses</a>

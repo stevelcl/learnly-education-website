@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $orders = fetch_all(
-    'SELECT o.id, o.total, o.status, o.created_at, u.name, u.email
+    'SELECT o.id, o.total, o.status, o.delivery_address, o.payment_method, o.created_at, u.name, u.email
      FROM orders o
      JOIN users u ON u.id = o.user_id
      ORDER BY o.created_at DESC'
@@ -43,6 +43,7 @@ include __DIR__ . '/includes/header.php';
                 <tr>
                     <th>Order</th>
                     <th>User</th>
+                    <th>Delivery</th>
                     <th>Total</th>
                     <th>Created</th>
                     <th>Status</th>
@@ -54,6 +55,7 @@ include __DIR__ . '/includes/header.php';
                     <tr>
                         <td>#<?= (int) $order['id'] ?></td>
                         <td><?= htmlspecialchars($order['name']) ?><br><span class="muted"><?= htmlspecialchars($order['email']) ?></span></td>
+                        <td><?= nl2br(htmlspecialchars((string) ($order['delivery_address'] ?: 'Not provided'))) ?><br><span class="muted"><?= htmlspecialchars((string) ($order['payment_method'] ?: '')) ?></span></td>
                         <td>RM <?= number_format((float) $order['total'], 2) ?></td>
                         <td><?= htmlspecialchars($order['created_at']) ?></td>
                         <td><?= htmlspecialchars($order['status']) ?></td>

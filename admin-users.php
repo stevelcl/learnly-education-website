@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $targetId = (int) ($_POST['user_id'] ?? 0);
     $role = $_POST['role'] ?? 'student';
-    $allowedRoles = ['student', 'moderator', 'admin'];
+    $allowedRoles = ['student', 'admin'];
 
     if ($targetId !== $user['id'] && in_array($role, $allowedRoles, true)) {
         $stmt = db()->prepare('UPDATE users SET role = ? WHERE id = ?');
@@ -34,6 +34,7 @@ include __DIR__ . '/includes/header.php';
             </div>
             <a class="button ghost" href="admin-dashboard.php">Back to Admin</a>
         </div>
+        <p class="muted">Moderator has been removed from active use. Access is now either student or admin.</p>
         <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
         <table>
             <thead>
@@ -58,7 +59,6 @@ include __DIR__ . '/includes/header.php';
                                 <input type="hidden" name="user_id" value="<?= (int) $row['id'] ?>">
                                 <select name="role">
                                     <option value="student" <?= $row['role'] === 'student' ? 'selected' : '' ?>>Student</option>
-                                    <option value="moderator" <?= $row['role'] === 'moderator' ? 'selected' : '' ?>>Moderator</option>
                                     <option value="admin" <?= $row['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                                 </select>
                                 <button type="submit">Save</button>

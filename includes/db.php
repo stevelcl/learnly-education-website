@@ -82,6 +82,44 @@ function ensure_runtime_schema(PDO $pdo): void
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )'
     );
+
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS course_item_progress (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            course_id INT NOT NULL,
+            item_type ENUM("resource", "quiz") NOT NULL,
+            item_id INT NOT NULL,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_user_course_item (user_id, course_id, item_type, item_id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+        )'
+    );
+
+    ensure_column(
+        $pdo,
+        'orders',
+        'delivery_address',
+        'ALTER TABLE orders ADD COLUMN delivery_address TEXT NULL AFTER status'
+    );
+    ensure_column(
+        $pdo,
+        'orders',
+        'payment_method',
+        'ALTER TABLE orders ADD COLUMN payment_method VARCHAR(80) NULL AFTER delivery_address'
+    );
+
+    $pdo->exec("UPDATE users SET role = 'student' WHERE role = 'moderator'");
+}
+
+function ensure_column(PDO $pdo, string $table, string $column, string $sql): void
+{
+    $stmt = $pdo->prepare('SHOW COLUMNS FROM `' . $table . '` LIKE ?');
+    $stmt->execute([$column]);
+    if (!$stmt->fetch()) {
+        $pdo->exec($sql);
+    }
 }
 
 function fetch_all(string $sql, array $params = []): array

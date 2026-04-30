@@ -24,7 +24,7 @@ function require_login(): array
 
 function is_moderator(?array $user): bool
 {
-    return $user && in_array($user['role'], ['admin', 'moderator'], true);
+    return is_admin($user);
 }
 
 function is_admin(?array $user): bool

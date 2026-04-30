@@ -20,6 +20,14 @@ $latestOrders = fetch_all(
      LIMIT 5'
 );
 
+$lowStockBooks = fetch_all(
+    'SELECT title, inventory
+     FROM books
+     WHERE inventory <= 5
+     ORDER BY inventory ASC, title ASC
+     LIMIT 8'
+);
+
 $pageTitle = 'Admin Dashboard';
 include __DIR__ . '/includes/header.php';
 ?>
@@ -48,6 +56,7 @@ include __DIR__ . '/includes/header.php';
                 <h2>Management Areas</h2>
                 <div class="actions">
                     <a class="button small" href="admin-users.php">Users</a>
+                    <a class="button small" href="admin-progress.php">Progress</a>
                     <a class="button small" href="admin-courses.php">Courses</a>
                     <a class="button small" href="admin-books.php">Books</a>
                     <a class="button small" href="admin-orders.php">Orders</a>
@@ -62,6 +71,16 @@ include __DIR__ . '/includes/header.php';
                 <?php endif; ?>
                 <?php foreach ($latestOrders as $order): ?>
                     <p><strong>#<?= (int) $order['id'] ?></strong> | <?= htmlspecialchars($order['name']) ?> | RM <?= number_format((float) $order['total'], 2) ?> | <?= htmlspecialchars($order['status']) ?></p>
+                <?php endforeach; ?>
+            </article>
+
+            <article class="panel">
+                <h2>Low-Stock Alerts</h2>
+                <?php if (!$lowStockBooks): ?>
+                    <p class="muted">All books are currently above the low-stock threshold.</p>
+                <?php endif; ?>
+                <?php foreach ($lowStockBooks as $book): ?>
+                    <p><strong><?= htmlspecialchars($book['title']) ?></strong><br><span class="muted"><?= (int) $book['inventory'] ?> left in stock</span></p>
                 <?php endforeach; ?>
             </article>
         </div>
