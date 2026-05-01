@@ -9,6 +9,8 @@ $progressRows = fetch_all(
         u.email,
         c.title,
         c.subject,
+        COALESCE(rs.average_rating, 0) AS average_rating,
+        COALESCE(rs.review_count, 0) AS review_count,
         COALESCE(up.saved, 0) AS saved,
         COALESCE(up.progress_percent, 0) AS progress_percent,
         up.updated_at,
@@ -31,6 +33,11 @@ $progressRows = fetch_all(
         ) grouped
         GROUP BY grouped.course_id
      ) ct ON ct.course_id = up.course_id
+     LEFT JOIN (
+        SELECT course_id, AVG(rating) AS average_rating, COUNT(*) AS review_count
+        FROM course_reviews
+        GROUP BY course_id
+     ) rs ON rs.course_id = up.course_id
      ORDER BY up.updated_at DESC'
 );
 
@@ -58,6 +65,7 @@ include __DIR__ . '/includes/header.php';
                         <th>Course</th>
                         <th>Progress</th>
                         <th>Completed Steps</th>
+                        <th>Course Rating</th>
                         <th>Saved</th>
                         <th>Updated</th>
                     </tr>
@@ -69,6 +77,7 @@ include __DIR__ . '/includes/header.php';
                             <td><?= htmlspecialchars($row['title']) ?><br><span class="muted"><?= htmlspecialchars($row['subject']) ?></span></td>
                             <td><?= (int) $row['progress_percent'] ?>%</td>
                             <td><?= (int) $row['completed_items'] ?> / <?= (int) $row['total_items'] ?></td>
+                            <td><?= number_format((float) $row['average_rating'], 1) ?> / 5<br><span class="muted"><?= (int) $row['review_count'] ?> reviews</span></td>
                             <td><?= !empty($row['saved']) ? 'Saved' : 'No' ?></td>
                             <td><?= htmlspecialchars((string) $row['updated_at']) ?></td>
                         </tr>

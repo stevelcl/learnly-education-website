@@ -152,9 +152,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $courses = fetch_all(
-    'SELECT c.*, COUNT(cr.id) AS resource_count
+    'SELECT
+        c.*,
+        COUNT(DISTINCT cr.id) AS resource_count,
+        COUNT(DISTINCT ce.id) AS enrollment_count,
+        COALESCE(AVG(rv.rating), 0) AS average_rating,
+        COUNT(DISTINCT rv.id) AS review_count
      FROM courses c
      LEFT JOIN course_resources cr ON cr.course_id = c.id
+     LEFT JOIN course_enrollments ce ON ce.course_id = c.id
+     LEFT JOIN course_reviews rv ON rv.course_id = c.id
      GROUP BY c.id
      ORDER BY c.created_at DESC'
 );
@@ -187,7 +194,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                         <h2><?= htmlspecialchars($course['title']) ?></h2>
                         <p><?= htmlspecialchars($course['description']) ?></p>
-                        <p class="muted"><?= htmlspecialchars($course['level']) ?></p>
+                        <p class="muted"><?= htmlspecialchars($course['level']) ?> | <?= (int) $course['enrollment_count'] ?> enrolled | <?= number_format((float) $course['average_rating'], 1) ?>/5 from <?= (int) $course['review_count'] ?> reviews</p>
                         <div class="actions">
                             <a class="button small ghost" href="admin-courses.php?edit=<?= (int) $course['id'] ?>">Edit</a>
                             <a class="button small ghost" href="course.php?id=<?= (int) $course['id'] ?>&amp;admin_preview=1">Admin Preview</a>

@@ -2,6 +2,24 @@
 
 require_once __DIR__ . '/db.php';
 
+function is_course_enrolled(int $userId, int $courseId): bool
+{
+    return (bool) fetch_one(
+        'SELECT id FROM course_enrollments WHERE user_id = ? AND course_id = ?',
+        [$userId, $courseId]
+    );
+}
+
+function enroll_in_course(int $userId, int $courseId): void
+{
+    $stmt = db()->prepare(
+        'INSERT INTO course_enrollments (user_id, course_id)
+         VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE enrolled_at = enrolled_at'
+    );
+    $stmt->execute([$userId, $courseId]);
+}
+
 function course_total_items(int $courseId): int
 {
     $resourceTotal = (int) (fetch_one('SELECT COUNT(*) AS total FROM course_resources WHERE course_id = ? AND resource_type <> "quiz"', [$courseId])['total'] ?? 0);

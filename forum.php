@@ -58,14 +58,15 @@ include __DIR__ . '/includes/header.php';
             <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
             <?php if ($error): ?><p class="alert error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
             <?php foreach ($posts as $post): ?>
-                <article class="panel">
+                <article class="panel forum-post-card">
+                    <a class="stretched-link" href="post.php?id=<?= (int) $post['id'] ?>" aria-label="Open discussion: <?= htmlspecialchars($post['title']) ?>"></a>
                     <span class="tag <?= $post['status'] === 'hidden' ? 'warn' : '' ?>"><?= htmlspecialchars($post['status']) ?></span>
-                    <h2><a href="post.php?id=<?= (int) $post['id'] ?>"><?= htmlspecialchars($post['title']) ?></a></h2>
+                    <h2><?= htmlspecialchars($post['title']) ?></h2>
                     <?php $preview = strlen($post['body']) > 220 ? substr($post['body'], 0, 220) . '...' : $post['body']; ?>
                     <p><?= nl2br(htmlspecialchars($preview)) ?></p>
-                    <p class="muted">By <?= htmlspecialchars($post['name']) ?> <?= $post['course_title'] ? '· ' . htmlspecialchars($post['course_title']) : '' ?></p>
+                    <p class="muted">By <?= htmlspecialchars($post['name']) ?><?= $post['course_title'] ? ' | ' . htmlspecialchars($post['course_title']) : '' ?></p>
                     <?php if (is_moderator($user)): ?>
-                        <form method="post" class="inline-form">
+                        <form method="post" class="inline-form forum-card-actions">
                             <?= csrf_field() ?>
                             <input type="hidden" name="moderate" value="1">
                             <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
