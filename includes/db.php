@@ -115,9 +115,16 @@ function ensure_runtime_schema(PDO $pdo): void
 
 function ensure_column(PDO $pdo, string $table, string $column, string $sql): void
 {
-    $stmt = $pdo->prepare('SHOW COLUMNS FROM `' . $table . '` LIKE ?');
-    $stmt->execute([$column]);
-    if (!$stmt->fetch()) {
+    $stmt = $pdo->prepare(
+        'SELECT 1
+         FROM information_schema.columns
+         WHERE table_schema = DATABASE()
+           AND table_name = ?
+           AND column_name = ?
+         LIMIT 1'
+    );
+    $stmt->execute([$table, $column]);
+    if (!$stmt->fetchColumn()) {
         $pdo->exec($sql);
     }
 }
