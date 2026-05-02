@@ -8,15 +8,18 @@ $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $type = $_POST['type'] ?? '';
-    $status = $_POST['status'] === 'hidden' ? 'hidden' : 'visible';
+    $action = $_POST['action'] ?? 'moderate';
+    $status = ($_POST['status'] ?? '') === 'hidden' ? 'hidden' : 'visible';
 
-    if ($type === 'post') {
+    if ($action === 'delete_post' && $type === 'post') {
+        $stmt = db()->prepare('DELETE FROM forum_posts WHERE id = ?');
+        $stmt->execute([(int) $_POST['id']]);
+        $message = 'Post deleted.';
+    } elseif ($type === 'post') {
         $stmt = db()->prepare('UPDATE forum_posts SET status = ? WHERE id = ?');
         $stmt->execute([$status, (int) $_POST['id']]);
         $message = 'Post moderation updated.';
-    }
-
-    if ($type === 'reply') {
+    } elseif ($type === 'reply') {
         $stmt = db()->prepare('UPDATE forum_replies SET status = ? WHERE id = ?');
         $stmt->execute([$status, (int) $_POST['id']]);
         $message = 'Reply moderation updated.';
@@ -74,16 +77,26 @@ include __DIR__ . '/includes/header.php';
                     <h2><?= htmlspecialchars($post['title']) ?></h2>
                     <p><?= nl2br(htmlspecialchars($post['body'])) ?></p>
                     <p class="muted">By <?= htmlspecialchars($post['name']) ?><?= $post['course_title'] ? ' | ' . htmlspecialchars($post['course_title']) : '' ?></p>
-                    <form method="post" class="inline-form">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="type" value="post">
-                        <input type="hidden" name="id" value="<?= (int) $post['id'] ?>">
-                        <select name="status">
-                            <option value="visible" <?= $post['status'] === 'visible' ? 'selected' : '' ?>>Visible</option>
-                            <option value="hidden" <?= $post['status'] === 'hidden' ? 'selected' : '' ?>>Hidden</option>
-                        </select>
-                        <button type="submit">Save Post</button>
-                    </form>
+                    <div class="actions">
+                        <form method="post" class="inline-form">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="action" value="moderate">
+                            <input type="hidden" name="type" value="post">
+                            <input type="hidden" name="id" value="<?= (int) $post['id'] ?>">
+                            <select name="status">
+                                <option value="visible" <?= $post['status'] === 'visible' ? 'selected' : '' ?>>Visible</option>
+                                <option value="hidden" <?= $post['status'] === 'hidden' ? 'selected' : '' ?>>Hidden</option>
+                            </select>
+                            <button type="submit">Save Post</button>
+                        </form>
+                        <form method="post" class="inline-form">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="action" value="delete_post">
+                            <input type="hidden" name="type" value="post">
+                            <input type="hidden" name="id" value="<?= (int) $post['id'] ?>">
+                            <button class="button danger" type="submit" data-confirm="Delete this post and all of its replies?">Delete Post</button>
+                        </form>
+                    </div>
 
                     <div style="margin-top: 1rem;">
                         <h3>Replies</h3>

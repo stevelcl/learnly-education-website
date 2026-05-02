@@ -41,6 +41,22 @@ $progressRows = fetch_all(
      ORDER BY up.updated_at DESC'
 );
 
+$feedbackRows = fetch_all(
+    'SELECT
+        cr.id,
+        cr.rating,
+        cr.comment,
+        cr.updated_at,
+        u.name,
+        u.email,
+        c.title,
+        c.subject
+     FROM course_reviews cr
+     JOIN users u ON u.id = cr.user_id
+     JOIN courses c ON c.id = cr.course_id
+     ORDER BY cr.updated_at DESC, cr.id DESC'
+);
+
 $pageTitle = 'Learner Progress';
 include __DIR__ . '/includes/header.php';
 ?>
@@ -80,6 +96,40 @@ include __DIR__ . '/includes/header.php';
                             <td><?= number_format((float) $row['average_rating'], 1) ?> / 5<br><span class="muted"><?= (int) $row['review_count'] ?> reviews</span></td>
                             <td><?= !empty($row['saved']) ? 'Saved' : 'No' ?></td>
                             <td><?= htmlspecialchars((string) $row['updated_at']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <div class="section-head" style="margin-top: 2rem;">
+            <div>
+                <span class="eyebrow">Course Feedback</span>
+                <h2>Read the ratings and comments learners have submitted.</h2>
+            </div>
+        </div>
+
+        <?php if (!$feedbackRows): ?>
+            <p class="muted">No course feedback has been submitted yet.</p>
+        <?php else: ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Course</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                        <th>Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($feedbackRows as $feedback): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($feedback['name']) ?><br><span class="muted"><?= htmlspecialchars($feedback['email']) ?></span></td>
+                            <td><?= htmlspecialchars($feedback['title']) ?><br><span class="muted"><?= htmlspecialchars($feedback['subject']) ?></span></td>
+                            <td><?= (int) $feedback['rating'] ?> / 5</td>
+                            <td><?= nl2br(htmlspecialchars((string) $feedback['comment'])) ?></td>
+                            <td><?= htmlspecialchars((string) $feedback['updated_at']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

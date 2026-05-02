@@ -147,7 +147,7 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     total DECIMAL(10, 2) NOT NULL,
-    status ENUM('paid', 'processing', 'cancelled') NOT NULL DEFAULT 'processing',
+    status ENUM('paid', 'processing', 'shipped', 'delivered', 'cancelled') NOT NULL DEFAULT 'processing',
     delivery_address TEXT,
     payment_method VARCHAR(80),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

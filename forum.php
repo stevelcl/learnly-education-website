@@ -14,12 +14,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     verify_csrf();
 
-    if (isset($_POST['moderate']) && is_moderator($user)) {
-        $postId = (int) $_POST['post_id'];
-        $status = $_POST['status'] === 'hidden' ? 'hidden' : 'visible';
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'moderate' && is_moderator($user)) {
+        $postId = (int) ($_POST['post_id'] ?? 0);
+        $status = ($_POST['status'] ?? '') === 'hidden' ? 'hidden' : 'visible';
         $stmt = db()->prepare('UPDATE forum_posts SET status = ? WHERE id = ?');
         $stmt->execute([$status, $postId]);
         $message = 'Post moderation updated.';
+    } elseif ($action === 'delete_post') {
+        $postId = (int) ($_POST['post_id'] ?? 0);
+        $postRow = fetch_one('SELECT user_id FROM forum_posts WHERE id = ?', [$postId]);
+        if ($postRow && (is_admin($user) || (int) $postRow['user_id'] === (int) $user['id'])) {
+            $stmt = db()->prepare('DELETE FROM forum_posts WHERE id = ?');
+            $stmt->execute([$postId]);
+            $message = 'Post deleted.';
+        } else {
+            $error = 'You do not have permission to delete that post.';
+        }
     } else {
         $title = trim($_POST['title'] ?? '');
         $body = trim($_POST['body'] ?? '');
@@ -65,10 +77,20 @@ include __DIR__ . '/includes/header.php';
                     <?php $preview = strlen($post['body']) > 220 ? substr($post['body'], 0, 220) . '...' : $post['body']; ?>
                     <p><?= nl2br(htmlspecialchars($preview)) ?></p>
                     <p class="muted">By <?= htmlspecialchars($post['name']) ?><?= $post['course_title'] ? ' | ' . htmlspecialchars($post['course_title']) : '' ?></p>
+
+                    <?php if ($user && (is_admin($user) || (int) $post['user_id'] === (int) $user['id'])): ?>
+                        <form method="post" class="inline-form forum-card-actions">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="action" value="delete_post">
+                            <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
+                            <button class="button small danger" type="submit" data-confirm="Delete this post and its replies?">Delete Post</button>
+                        </form>
+                    <?php endif; ?>
+
                     <?php if (is_moderator($user)): ?>
                         <form method="post" class="inline-form forum-card-actions">
                             <?= csrf_field() ?>
-                            <input type="hidden" name="moderate" value="1">
+                            <input type="hidden" name="action" value="moderate">
                             <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
                             <select name="status">
                                 <option value="visible" <?= $post['status'] === 'visible' ? 'selected' : '' ?>>Visible</option>

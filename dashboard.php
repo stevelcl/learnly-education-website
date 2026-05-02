@@ -29,7 +29,20 @@ $progressRows = fetch_all(
     [$user['id']]
 );
 
-$orders = fetch_all('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [$user['id']]);
+$activeOrders = fetch_all(
+    'SELECT * FROM orders
+     WHERE user_id = ? AND status IN ("paid", "processing", "shipped")
+     ORDER BY created_at DESC
+     LIMIT 5',
+    [$user['id']]
+);
+$orderHistory = fetch_all(
+    'SELECT * FROM orders
+     WHERE user_id = ? AND status IN ("delivered", "cancelled")
+     ORDER BY created_at DESC
+     LIMIT 5',
+    [$user['id']]
+);
 $posts = fetch_all('SELECT * FROM forum_posts WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', [$user['id']]);
 $pageTitle = 'Dashboard';
 include __DIR__ . '/includes/header.php';
@@ -53,12 +66,30 @@ include __DIR__ . '/includes/header.php';
             </article>
 
             <article class="panel">
-                <h2>Recent Purchases</h2>
-                <?php if (!$orders): ?>
-                    <p class="muted">No purchases yet.</p>
+                <h2>Open Orders</h2>
+                <?php if (!$activeOrders): ?>
+                    <p class="muted">No active orders right now.</p>
                 <?php endif; ?>
-                <?php foreach ($orders as $order): ?>
-                    <p><strong>Order #<?= (int) $order['id'] ?></strong><br>RM <?= number_format((float) $order['total'], 2) ?> | <?= htmlspecialchars($order['status']) ?></p>
+                <?php foreach ($activeOrders as $order): ?>
+                    <p>
+                        <strong>Order #<?= (int) $order['id'] ?></strong><br>
+                        RM <?= number_format((float) $order['total'], 2) ?> | <?= htmlspecialchars($order['status']) ?><br>
+                        <span class="muted"><?= htmlspecialchars((string) ($order['delivery_address'] ?: 'No address saved')) ?></span>
+                    </p>
+                <?php endforeach; ?>
+            </article>
+
+            <article class="panel">
+                <h2>Order History</h2>
+                <?php if (!$orderHistory): ?>
+                    <p class="muted">No completed order history yet.</p>
+                <?php endif; ?>
+                <?php foreach ($orderHistory as $order): ?>
+                    <p>
+                        <strong>Order #<?= (int) $order['id'] ?></strong><br>
+                        RM <?= number_format((float) $order['total'], 2) ?> | <?= htmlspecialchars($order['status']) ?><br>
+                        <span class="muted"><?= htmlspecialchars((string) ($order['delivery_address'] ?: 'No address saved')) ?></span>
+                    </p>
                 <?php endforeach; ?>
             </article>
 

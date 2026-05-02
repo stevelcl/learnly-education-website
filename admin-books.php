@@ -11,6 +11,7 @@ $noticeMap = [
     'deleted' => 'Book deleted.',
 ];
 $message = $noticeMap[$_GET['notice'] ?? ''] ?? '';
+$error = '';
 
 $editingId = (int) ($_GET['edit'] ?? 0);
 $editing = $editingId ? fetch_one('SELECT * FROM books WHERE id = ?', [$editingId]) : null;
@@ -41,7 +42,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description'] ?? '');
     $price = (float) ($_POST['price'] ?? 0);
     $inventory = (int) ($_POST['inventory'] ?? 0);
-    $coverUrl = trim($_POST['cover_url'] ?? '');
+    $coverUrl = trim($_POST['existing_cover_url'] ?? '');
+
+    if (isset($_FILES['cover_image']) && is_array($_FILES['cover_image']) && (int) ($_FILES['cover_image']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        $upload = $_FILES['cover_image'];
+        $uploadError = (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE);
+
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            $error = 'Book cover upload failed. Please try again.';
+        } else {
+            $mimeType = mime_content_type($upload['tmp_name']) ?: '';
+            $allowedMimeTypes = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+                'image/gif' => 'gif',
+            ];
+
+            if (!isset($allowedMimeTypes[$mimeType])) {
+                $error = 'Please upload a JPG, PNG, WEBP, or GIF cover image.';
+            } else {
+                $uploadDirectory = __DIR__ . '/assets/uploads/books';
+                if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0775, true) && !is_dir($uploadDirectory)) {
+                    $error = 'Upload folder could not be prepared.';
+                } else {
+                    $filename = 'book-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $allowedMimeTypes[$mimeType];
+                    $destination = $uploadDirectory . '/' . $filename;
+
+                    if (!move_uploaded_file($upload['tmp_name'], $destination)) {
+                        $error = 'Book cover could not be saved on the server.';
+                    } else {
+                        $coverUrl = 'assets/uploads/books/' . $filename;
+                    }
+                }
+            }
+        }
+    }
 
     $formValues = [
         'title' => $title,
@@ -53,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'description' => $description,
     ];
 
-    if ($title !== '' && $author !== '' && $category !== '' && $description !== '') {
+    if ($error === '' && $title !== '' && $author !== '' && $category !== '' && $description !== '') {
         if ($action === 'update') {
             $stmt = db()->prepare(
                 'UPDATE books SET title = ?, author = ?, category = ?, description = ?, price = ?, inventory = ?, cover_url = ? WHERE id = ?'
@@ -70,6 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newId = (int) db()->lastInsertId();
         header('Location: admin-books.php?edit=' . $newId . '&notice=created');
         exit;
+    }
+
+    if ($error === '' && ($title === '' || $author === '' || $category === '' || $description === '')) {
+        $error = 'Please complete all required book fields.';
     }
 }
 
@@ -90,6 +130,7 @@ include __DIR__ . '/includes/header.php';
                 <a class="button ghost" href="admin-dashboard.php">Back to Admin</a>
             </div>
             <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
+            <?php if ($error): ?><p class="alert error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
             <?php if ($lowStockBooks): ?>
                 <div class="alert error" style="margin-bottom: 1rem;">
                     <strong>Low-stock alert:</strong>
@@ -122,20 +163,28 @@ include __DIR__ . '/includes/header.php';
 
         <aside class="panel">
             <h2><?= $editing ? 'Edit Book' : 'Add Book' ?></h2>
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="<?= $editing ? 'update' : 'create' ?>">
                 <input type="hidden" name="book_id" value="<?= (int) ($editing['id'] ?? 0) ?>">
+                <input type="hidden" name="existing_cover_url" value="<?= htmlspecialchars($formValues['cover_url']) ?>">
                 <label>Title <input name="title" value="<?= htmlspecialchars($formValues['title']) ?>" required></label>
                 <label>Author <input name="author" value="<?= htmlspecialchars($formValues['author']) ?>" required></label>
                 <label>Category <input name="category" value="<?= htmlspecialchars($formValues['category']) ?>" required></label>
                 <label>Price <input name="price" type="number" step="0.01" min="0" value="<?= htmlspecialchars($formValues['price']) ?>" required></label>
                 <label>Inventory <input name="inventory" type="number" min="0" value="<?= htmlspecialchars($formValues['inventory']) ?>" required></label>
-                <label>Cover URL <input name="cover_url" value="<?= htmlspecialchars($formValues['cover_url']) ?>"></label>
+                <label>Cover Image <input name="cover_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-cover-file-input></label>
                 <label>Description <textarea name="description" required><?= htmlspecialchars($formValues['description']) ?></textarea></label>
-                <?php if ($formValues['cover_url'] !== ''): ?>
-                    <img src="<?= htmlspecialchars(book_cover_src($formValues['cover_url'])) ?>" alt="Book cover preview" class="book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';">
-                <?php endif; ?>
+                <img
+                    src="<?= htmlspecialchars(book_cover_src($formValues['cover_url'])) ?>"
+                    alt="Book cover preview"
+                    class="book-cover"
+                    data-cover-preview
+                    data-has-existing="<?= $formValues['cover_url'] === '' ? '0' : '1' ?>"
+                    data-placeholder-src="assets/images/book-placeholder.svg"
+                    <?= $formValues['cover_url'] === '' ? 'hidden' : '' ?>
+                    referrerpolicy="no-referrer"
+                    onerror="this.onerror=null;this.src=this.dataset.placeholderSrc;">
                 <div class="actions">
                     <button type="submit"><?= $editing ? 'Update Book' : 'Add Book' ?></button>
                     <a class="button ghost" href="admin-books.php">Clear All</a>

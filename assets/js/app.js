@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const nav = document.querySelector('[data-nav]');
   const resourceSelect = document.querySelector('[data-resource-select]');
   const resourcePanels = document.querySelectorAll('[data-resource-fields]');
+  const coverFileInput = document.querySelector('[data-cover-file-input]');
+  const coverPreview = document.querySelector('[data-cover-preview]');
 
   if (navToggle && nav) {
     navToggle.addEventListener('click', () => {
@@ -36,6 +38,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     syncResourcePanels();
     resourceSelect.addEventListener('change', syncResourcePanels);
+  }
+
+  if (coverFileInput instanceof HTMLInputElement && coverPreview instanceof HTMLImageElement) {
+    const syncCoverPreview = () => {
+      const file = coverFileInput.files && coverFileInput.files[0];
+      if (!file) {
+        if ((coverPreview.dataset.hasExisting || '') !== '1') {
+          coverPreview.hidden = true;
+          coverPreview.src = coverPreview.dataset.placeholderSrc || '';
+        }
+        return;
+      }
+
+      coverPreview.hidden = false;
+      coverPreview.src = URL.createObjectURL(file);
+      coverPreview.onload = () => {
+        URL.revokeObjectURL(coverPreview.src);
+      };
+    };
+
+    syncCoverPreview();
+    coverFileInput.addEventListener('change', syncCoverPreview);
   }
 
   document.addEventListener('click', (event) => {

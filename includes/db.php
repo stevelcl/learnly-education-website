@@ -137,6 +137,8 @@ function ensure_runtime_schema(PDO $pdo): void
         'ALTER TABLE orders ADD COLUMN payment_method VARCHAR(80) NULL AFTER delivery_address'
     );
 
+    ensure_order_status_states($pdo);
+
     $pdo->exec("UPDATE users SET role = 'student' WHERE role = 'moderator'");
 }
 
@@ -153,6 +155,28 @@ function ensure_column(PDO $pdo, string $table, string $column, string $sql): vo
     $stmt->execute([$table, $column]);
     if (!$stmt->fetchColumn()) {
         $pdo->exec($sql);
+    }
+}
+
+function ensure_order_status_states(PDO $pdo): void
+{
+    $stmt = $pdo->prepare(
+        'SELECT column_type
+         FROM information_schema.columns
+         WHERE table_schema = DATABASE()
+           AND table_name = ?
+           AND column_name = ?
+         LIMIT 1'
+    );
+    $stmt->execute(['orders', 'status']);
+    $columnType = (string) ($stmt->fetchColumn() ?: '');
+
+    if ($columnType !== '' && stripos($columnType, "'shipped'") === false) {
+        $pdo->exec(
+            "ALTER TABLE orders
+             MODIFY COLUMN status ENUM('paid', 'processing', 'shipped', 'delivered', 'cancelled')
+             NOT NULL DEFAULT 'processing'"
+        );
     }
 }
 
