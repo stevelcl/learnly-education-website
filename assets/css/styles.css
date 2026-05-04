@@ -1134,6 +1134,22 @@ textarea {
     max-width: 96px;
 }
 
+.forum-admin-actions {
+    align-items: stretch;
+}
+
+.forum-admin-inline-form {
+    align-items: center;
+}
+
+.forum-admin-inline-form select {
+    min-width: 140px;
+}
+
+.forum-admin-inline-form button {
+    min-width: 132px;
+}
+
 .video-frame {
     position: relative;
     overflow: hidden;

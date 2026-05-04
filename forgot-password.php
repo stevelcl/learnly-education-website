@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/mailer.php';
 
 $pageTitle = 'Forgot Password';
 $error = '';
@@ -25,8 +26,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $generatedToken = strtoupper(bin2hex(random_bytes(4)));
             $stmt = db()->prepare('INSERT INTO password_resets (user_id, reset_token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))');
             $stmt->execute([(int) $user['id'], $generatedToken]);
-            $message = 'Reset code created. For this coursework demo, use the code below to set a new password.';
-            $resetEmail = $email;
+
+            $subject = 'Learnly password reset code';
+            $textBody = "Hello,\n\nWe received a request to reset your Learnly password.\n\nYour reset code is: {$generatedToken}\n\nThis code will expire in 1 hour.\nIf you did not request this change, you can ignore this email.\n";
+            $htmlBody = '<p>Hello,</p><p>We received a request to reset your Learnly password.</p><p><strong>Your reset code is: '
+                . htmlspecialchars($generatedToken, ENT_QUOTES, 'UTF-8')
+                . '</strong></p><p>This code will expire in 1 hour.</p><p>If you did not request this change, you can ignore this email.</p>';
+
+            if (send_app_mail($email, $subject, $textBody, $htmlBody)) {
+                $message = 'A reset code has been sent to your email address.';
+                $resetEmail = $email;
+            } else {
+                $rollback = db()->prepare('DELETE FROM password_resets WHERE user_id = ? AND reset_token = ? AND used_at IS NULL');
+                $rollback->execute([(int) $user['id'], $generatedToken]);
+                $error = 'We could not send the reset email right now. Please check the mail configuration and try again.';
+            }
         }
     } elseif ($step === 'reset') {
         $email = strtolower($resetEmail);
@@ -64,15 +78,9 @@ include __DIR__ . '/includes/header.php';
     <div class="container narrow">
         <div class="panel">
             <h1>Forgot Password</h1>
-            <p class="muted">This demo reset flow creates a temporary code locally so users can recover access without needing email integration.</p>
+            <p class="muted">Request a password reset code and we will email it to the address on your account.</p>
             <?php if ($error): ?><p class="alert error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
             <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
-
-            <?php if ($generatedToken): ?>
-                <div class="alert">
-                    <strong>Reset code:</strong> <?= htmlspecialchars($generatedToken) ?>
-                </div>
-            <?php endif; ?>
 
             <div class="grid">
                 <div class="panel">
@@ -81,7 +89,7 @@ include __DIR__ . '/includes/header.php';
                         <?= csrf_field() ?>
                         <input type="hidden" name="step" value="request">
                         <label>Email <input name="request_email" type="email" value="<?= htmlspecialchars($requestEmail) ?>" required></label>
-                        <button type="submit">Generate Code</button>
+                        <button type="submit">Send Code</button>
                     </form>
                 </div>
 
