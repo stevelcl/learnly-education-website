@@ -1,15 +1,5 @@
 <?php
-
-function app_config(): array
-{
-    static $config;
-
-    if ($config === null) {
-        $config = require __DIR__ . '/../config.php';
-    }
-
-    return $config;
-}
+require_once __DIR__ . '/config-helper.php';
 
 function send_app_mail(string $to, string $subject, string $textBody, ?string $htmlBody = null): bool
 {

@@ -1,23 +1,5 @@
 <?php
-
-function app_config(): array
-{
-    $default = [
-        'DB_HOST' => getenv('DB_HOST') ?: 'localhost',
-        'DB_PORT' => getenv('DB_PORT') ?: '3306',
-        'DB_NAME' => getenv('DB_NAME') ?: 'learnly',
-        'DB_USER' => getenv('DB_USER') ?: 'root',
-        'DB_PASS' => getenv('DB_PASS') ?: '',
-        'DB_SSL' => filter_var(getenv('DB_SSL') ?: false, FILTER_VALIDATE_BOOLEAN),
-    ];
-
-    $localConfig = dirname(__DIR__) . '/config.php';
-    if (file_exists($localConfig)) {
-        return array_merge($default, require $localConfig);
-    }
-
-    return $default;
-}
+require_once __DIR__ . '/config-helper.php';
 
 function db(): PDO
 {
