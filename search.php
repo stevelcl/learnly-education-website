@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/books.php';
 
 $query = trim($_GET['q'] ?? '');
 $courses = [];
@@ -88,7 +89,7 @@ include __DIR__ . '/includes/header.php';
                     <?php endif; ?>
                     <?php foreach ($books as $book): ?>
                         <div style="margin-bottom: 1rem;">
-                            <h3><a href="bookstore.php?search=<?= urlencode($book['title']) ?>"><?= htmlspecialchars($book['title']) ?></a></h3>
+                            <h3><a href="<?= htmlspecialchars(book_url((int) $book['id'])) ?>"><?= htmlspecialchars($book['title']) ?></a></h3>
                             <p class="muted"><?= htmlspecialchars($book['author']) ?> | <?= htmlspecialchars($book['category']) ?></p>
                             <p>RM <?= number_format((float) $book['price'], 2) ?></p>
                         </div>

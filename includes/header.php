@@ -9,6 +9,8 @@ $pageTitle = $pageTitle ?? 'Learnly';
 $user = current_user();
 $showBackButton = $showBackButton ?? ($pageTitle !== 'Home');
 $backTarget = $backTarget ?? 'index.php';
+$baseHref = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+$baseHref = $baseHref === '' ? '/' : $baseHref . '/';
 ?>
 <!doctype html>
 <html lang="en">
@@ -16,6 +18,7 @@ $backTarget = $backTarget ?? 'index.php';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($pageTitle) ?> | Learnly</title>
+    <base href="<?= htmlspecialchars($baseHref) ?>">
     <link rel="icon" type="image/png" href="assets/images/learnly-logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,12 +26,15 @@ $backTarget = $backTarget ?? 'index.php';
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-    <header class="site-header">
+    <header class="site-header" data-site-header>
         <a class="brand" href="index.php" aria-label="Learnly home">
             <img src="assets/images/learnly-logo.png" alt="Learnly" class="brand-logo">
             <span class="brand-name">Learnly</span>
         </a>
-        <form class="site-search" method="get" action="search.php">
+        <button class="search-toggle" type="button" aria-label="Toggle search" aria-expanded="false" data-search-toggle>
+            <span class="search-toggle-icon" aria-hidden="true"></span>
+        </button>
+        <form class="site-search" method="get" action="search.php" data-search-form>
             <label class="visually-hidden" for="site-search-input">Search Learnly</label>
             <input id="site-search-input" type="search" name="q" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" placeholder="Search courses, books, forum">
             <button type="submit" class="button small secondary">Search</button>

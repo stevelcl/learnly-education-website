@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/courses.php';
 
 $pageTitle = 'Courses';
 $subject = trim($_GET['subject'] ?? '');
@@ -27,7 +28,7 @@ $courses = fetch_all(
      LEFT JOIN course_reviews rv ON rv.course_id = c.id
      ' . $where . '
      GROUP BY c.id
-     ORDER BY c.subject, c.title',
+     ORDER BY COALESCE(AVG(rv.rating), 0) DESC, COUNT(DISTINCT ce.id) DESC, c.subject, c.title',
     $params
 );
 
@@ -39,9 +40,9 @@ include __DIR__ . '/includes/header.php';
         <div class="section-head">
             <div>
                 <span class="eyebrow">Learning Catalog</span>
-                <h1>Browse course spaces that feel guided, credible, and worth enrolling in.</h1>
+                <h1>Browse guided course paths that feel credible, focused, and worth committing to.</h1>
             </div>
-            <p>Each card surfaces the practical signal first: topic, rating, learning workload, and how many people have already joined.</p>
+            <p>Each card surfaces the signal students look for first: quality, social proof, workload, and whether the course is already getting traction.</p>
         </div>
 
         <form class="filter-form course-filter" method="get">
@@ -63,28 +64,38 @@ include __DIR__ . '/includes/header.php';
                 <?php
                 $courseMinutes = max(20, ((int) $course['module_count'] * 14) + ((int) $course['quiz_count'] * 4));
                 $roundedRating = number_format((float) $course['average_rating'], 1);
-                $starCount = max(1, (int) round((float) $course['average_rating']));
+                $badges = course_badges($course);
+                $primaryBadge = $badges[0] ?? '';
                 ?>
                 <article class="card course-catalog-card">
-                    <a class="stretched-link" href="course.php?id=<?= (int) $course['id'] ?>" aria-label="Open course overview: <?= htmlspecialchars($course['title']) ?>"></a>
+                    <a class="stretched-link" href="<?= htmlspecialchars(course_url((int) $course['id'])) ?>" aria-label="Open course overview: <?= htmlspecialchars($course['title']) ?>"></a>
                     <div class="card-topline">
-                        <span class="tag"><?= htmlspecialchars($course['subject']) ?></span>
-                        <span class="muted"><?= htmlspecialchars($course['level']) ?></span>
+                        <div class="course-card-top-tags">
+                            <span class="tag"><?= htmlspecialchars($course['subject']) ?></span>
+                            <?php if ($primaryBadge !== ''): ?>
+                                <span class="tag course-badge"><?= htmlspecialchars($primaryBadge) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <span class="course-card-duration"><?= $courseMinutes ?> mins</span>
                     </div>
                     <h2><?= htmlspecialchars($course['title']) ?></h2>
                     <p><?= htmlspecialchars($course['description']) ?></p>
-                    <div class="course-card-meta">
-                        <span><?= (int) $course['module_count'] ?> modules</span>
-                        <span><?= (int) $course['quiz_count'] ?> quizzes</span>
-                        <span><?= $courseMinutes ?> mins</span>
-                    </div>
-                    <div class="course-card-footer">
-                        <div class="rating-inline">
-                            <span class="stars" aria-hidden="true"><?= str_repeat('★', $starCount) ?></span>
-                            <span><?= $roundedRating ?></span>
-                            <span class="muted">(<?= (int) $course['review_count'] ?> reviews)</span>
+
+                    <div class="course-card-trust">
+                        <div class="course-trust-block">
+                            <span class="stars" aria-hidden="true"><?= htmlspecialchars(course_star_text((float) $course['average_rating'])) ?></span>
+                            <strong><?= $roundedRating ?></strong>
+                            <span class="muted"><?= (int) $course['review_count'] ?> reviews</span>
                         </div>
-                        <span class="muted"><?= (int) $course['enrollment_count'] ?> enrolled</span>
+                        <div class="course-trust-block">
+                            <strong><?= (int) $course['enrollment_count'] ?></strong>
+                            <span class="muted">enrolled</span>
+                        </div>
+                    </div>
+
+                    <div class="course-card-footer">
+                        <span class="inline-link">View course</span>
+                        <span class="muted"><?= htmlspecialchars($course['level']) ?></span>
                     </div>
                 </article>
             <?php endforeach; ?>

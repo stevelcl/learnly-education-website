@@ -1,0 +1,8 @@
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^book/([0-9]+)/?$ book.php?id=$1 [L,QSA,NC]
+RewriteRule ^learn/([0-9]+)/?$ learn.php?id=$1 [L,QSA,NC]

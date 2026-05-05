@@ -2,8 +2,22 @@
 $pageTitle = 'Home';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/media.php';
+require_once __DIR__ . '/includes/books.php';
 $courses = fetch_all('SELECT * FROM courses ORDER BY created_at DESC LIMIT 3');
-$books = fetch_all('SELECT * FROM books ORDER BY inventory DESC LIMIT 3');
+$books = fetch_all(
+    'SELECT
+        b.*,
+        COALESCE(r.avg_rating, 0) AS avg_rating,
+        COALESCE(r.review_count, 0) AS review_count
+     FROM books b
+     LEFT JOIN (
+        SELECT book_id, AVG(rating) AS avg_rating, COUNT(*) AS review_count
+        FROM book_reviews
+        GROUP BY book_id
+     ) r ON r.book_id = b.id
+     ORDER BY COALESCE(r.avg_rating, 0) DESC, b.inventory DESC
+     LIMIT 3'
+);
 $courseCount = (int) (fetch_one('SELECT COUNT(*) AS total FROM courses')['total'] ?? 0);
 $bookCount = (int) (fetch_one('SELECT COUNT(*) AS total FROM books')['total'] ?? 0);
 $forumCount = (int) (fetch_one('SELECT COUNT(*) AS total FROM forum_posts')['total'] ?? 0);
@@ -12,7 +26,7 @@ include __DIR__ . '/includes/header.php';
 
 <section class="hero">
     <div class="hero-inner hero-grid">
-        <div class="hero-copy">
+        <div class="hero-copy" data-reveal="slide-up">
             <span class="hero-pill">Built for undergraduate learning</span>
             <h1>A modern study space for courses, questions, and academic books.</h1>
             <p>Learnly brings together structured learning content, progress tracking, community support, and a student-focused bookstore in one clean platform.</p>
@@ -35,7 +49,7 @@ include __DIR__ . '/includes/header.php';
                 </div>
             </div>
         </div>
-        <div class="hero-preview">
+        <div class="hero-preview" data-reveal="slide-left">
             <div class="preview-card preview-course">
                 <div class="preview-head">
                     <span class="tag">Featured Path</span>
@@ -70,7 +84,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<section class="section">
+<section class="section" data-reveal="slide-up">
     <div class="container">
         <div class="section-head">
             <div>
@@ -80,22 +94,22 @@ include __DIR__ . '/includes/header.php';
             <p>Everything is arranged around the flow of learning: discover a module, save what matters, track progress, ask for help, and get the books you need.</p>
         </div>
         <div class="feature-grid">
-            <article class="feature-card">
+            <article class="feature-card" data-reveal="slide-up" data-reveal-delay="0">
                 <div class="feature-icon">L</div>
                 <h3>Structured learning</h3>
                 <p>Courses organize notes, videos, and quiz material into a format that feels guided instead of scattered.</p>
             </article>
-            <article class="feature-card">
+            <article class="feature-card" data-reveal="slide-up" data-reveal-delay="1">
                 <div class="feature-icon">P</div>
                 <h3>Progress visibility</h3>
                 <p>Students can track completion, save modules, and revisit resources without losing momentum.</p>
             </article>
-            <article class="feature-card">
+            <article class="feature-card" data-reveal="slide-up" data-reveal-delay="2">
                 <div class="feature-icon">C</div>
                 <h3>Community support</h3>
                 <p>The forum turns isolated studying into collaborative learning with question threads and moderation.</p>
             </article>
-            <article class="feature-card">
+            <article class="feature-card" data-reveal="slide-up" data-reveal-delay="3">
                 <div class="feature-icon">B</div>
                 <h3>Book discovery</h3>
                 <p>The bookstore connects learning needs to book search, categories, inventory, and checkout.</p>
@@ -104,7 +118,7 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<section class="section">
+<section class="section" data-reveal="slide-up">
     <div class="container">
         <div class="section-head">
             <div>
@@ -114,8 +128,8 @@ include __DIR__ . '/includes/header.php';
             <a class="button ghost" href="courses.php">View all courses</a>
         </div>
         <div class="grid course-grid">
-            <?php foreach ($courses as $course): ?>
-                <article class="card resource-card">
+            <?php foreach ($courses as $index => $course): ?>
+                <article class="card resource-card" data-reveal="slide-up" data-reveal-delay="<?= $index ?>">
                     <div class="card-topline">
                         <span class="tag"><?= htmlspecialchars($course['subject']) ?></span>
                         <span class="muted"><?= htmlspecialchars($course['level']) ?></span>
@@ -129,21 +143,26 @@ include __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<section class="section">
+<section class="section" data-reveal="slide-up">
     <div class="container">
         <div class="spotlight">
-            <div class="spotlight-copy">
+            <div class="spotlight-copy" data-reveal="slide-up">
                 <span class="eyebrow">Bookstore</span>
                 <h2>Pick up academic titles without leaving your study flow.</h2>
                 <p>Browse by discipline, compare titles, and move straight into checkout with inventory already connected to the database.</p>
                 <a class="button" href="bookstore.php">Browse the bookstore</a>
             </div>
-            <div class="book-shelf">
-                <?php foreach ($books as $book): ?>
-                    <article class="card shelf-book">
+            <div class="book-shelf" data-reveal="slide-left">
+                <?php foreach ($books as $index => $book): ?>
+                    <article class="card shelf-book" data-reveal="slide-up" data-reveal-delay="<?= $index ?>">
+                        <a class="stretched-link" href="<?= htmlspecialchars(book_url((int) $book['id'])) ?>" aria-label="View <?= htmlspecialchars($book['title']) ?>"></a>
                         <img src="<?= htmlspecialchars(book_cover_src($book['cover_url'])) ?>" alt="<?= htmlspecialchars($book['title']) ?>" class="book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';">
                         <h3><?= htmlspecialchars($book['title']) ?></h3>
                         <p class="muted"><?= htmlspecialchars($book['author']) ?></p>
+                        <div class="rating-inline book-rating-inline">
+                            <span class="stars" aria-hidden="true"><?= htmlspecialchars(render_stars((float) $book['avg_rating'])) ?></span>
+                            <span><?= htmlspecialchars(rating_label((float) $book['avg_rating'], (int) $book['review_count'])) ?></span>
+                        </div>
                         <p><strong>RM <?= number_format((float) $book['price'], 2) ?></strong></p>
                     </article>
                 <?php endforeach; ?>
