@@ -106,6 +106,8 @@ $requestedStep = max(0, min(max($totalItems - 1, 0), (int) ($_GET['step'] ?? 0))
 $step = min($requestedStep, $maxUnlockedStep);
 $currentItem = $curriculum[$step] ?? null;
 $baseUrl = learn_url($courseId, $adminPreview);
+$stepUrl = static fn (int $targetStep, array $params = [], string $fragment = ''): string
+    => app_url_with_query($baseUrl, array_merge(['step' => $targetStep], $params), $fragment);
 
 if (!$currentItem) {
     header('Location: ' . course_url($courseId) . ($adminPreview ? '&admin_preview=1' : ''));
@@ -123,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'toggle_saved' && $user && !$adminPreview) {
         sync_user_course_progress((int) $user['id'], $courseId, isset($_POST['saved']));
-        header('Location: ' . $baseUrl . '?step=' . $step . '&notice=saved#workspace-sidebar');
+        header('Location: ' . $stepUrl($step, ['notice' => 'saved'], 'workspace-sidebar'));
         exit;
     }
 
@@ -135,10 +137,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mark_course_item_complete((int) $user['id'], $courseId, 'quiz', $quizId);
             $result = $selectedOption === $question['correct_option'] ? 'correct' : 'incorrect';
             $nextStep = min($step + 1, max(count($curriculum) - 1, 0));
-            header('Location: ' . $baseUrl . '?step=' . $nextStep . '&quiz_result=' . $result . '&answered=' . $quizId . '#lesson-content');
+            header('Location: ' . $stepUrl($nextStep, ['quiz_result' => $result, 'answered' => $quizId], 'lesson-content'));
             exit;
         }
-        header('Location: ' . $baseUrl . '?step=' . $step . '&quiz_result=invalid#lesson-content');
+        header('Location: ' . $stepUrl($step, ['quiz_result' => 'invalid'], 'lesson-content'));
         exit;
     }
 
@@ -151,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment), updated_at = CURRENT_TIMESTAMP'
         );
         $stmt->execute([(int) $user['id'], $courseId, $rating, $comment]);
-        header('Location: ' . $baseUrl . '?step=' . $step . '&notice=review_saved#completion-panel');
+        header('Location: ' . $stepUrl($step, ['notice' => 'review_saved'], 'completion-panel'));
         exit;
     }
 }
@@ -241,15 +243,15 @@ include __DIR__ . '/includes/header.php';
                         $isActive = $index === $step;
                         $isComplete = !empty($completedMap[$index]);
                         $isUnlocked = $adminPreview || $index <= $maxUnlockedStep;
-                        $stepUrl = $baseUrl . '?step=' . $index;
+                        $itemStepUrl = $stepUrl($index);
                         ?>
                         <?php if ($isUnlocked): ?>
                             <a
                                 class="learning-outline-item<?= $isActive ? ' active' : '' ?><?= $isComplete ? ' complete' : '' ?>"
-                                href="<?= htmlspecialchars($stepUrl) ?>"
+                                href="<?= htmlspecialchars($itemStepUrl) ?>"
                                 data-outline-item
                                 data-step-index="<?= $index ?>"
-                                data-step-url="<?= htmlspecialchars($stepUrl) ?>"
+                                data-step-url="<?= htmlspecialchars($itemStepUrl) ?>"
                             >
                                 <span class="learning-outline-status"><?= $isComplete ? 'Done' : $index + 1 ?></span>
                                 <span>
@@ -263,7 +265,7 @@ include __DIR__ . '/includes/header.php';
                                 aria-disabled="true"
                                 data-outline-item
                                 data-step-index="<?= $index ?>"
-                                data-step-url="<?= htmlspecialchars($stepUrl) ?>"
+                                data-step-url="<?= htmlspecialchars($itemStepUrl) ?>"
                             >
                                 <span class="learning-outline-status">Locked</span>
                                 <span>
@@ -354,12 +356,12 @@ include __DIR__ . '/includes/header.php';
 
                     <div class="learning-nav-row">
                         <?php if ($prevStep !== null): ?>
-                            <a class="button ghost" href="<?= htmlspecialchars($baseUrl . '?step=' . $prevStep) ?>">Previous Lesson</a>
+                            <a class="button ghost" href="<?= htmlspecialchars($stepUrl($prevStep)) ?>">Previous Lesson</a>
                         <?php endif; ?>
 
                         <?php if ($nextStep !== null): ?>
                             <?php if ($nextEnabled): ?>
-                                <a class="button" data-next-lesson href="<?= htmlspecialchars($baseUrl . '?step=' . $nextStep) ?>">Next Lesson</a>
+                                <a class="button" data-next-lesson href="<?= htmlspecialchars($stepUrl($nextStep)) ?>">Next Lesson</a>
                             <?php else: ?>
                                 <span class="button disabled-button" data-next-lesson-disabled>Complete this lesson to continue</span>
                             <?php endif; ?>

@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (nextDisabled instanceof HTMLElement) {
-        const nextUrl = `${learningShell.dataset.baseUrl}?step=${nextIndex}`;
+        const nextUrl = nextOutline instanceof HTMLElement ? (nextOutline.dataset.stepUrl || '') : '';
         const nextButton = document.createElement('a');
         nextButton.className = 'button';
         nextButton.href = nextUrl;
@@ -279,7 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (response.progress_percent >= 100) {
-        window.location.assign(`${learningShell.dataset.baseUrl}?step=${currentStep}#completion-panel`);
+        const currentOutline = outlineItems.find((item) => Number.parseInt(item.dataset.stepIndex || '-1', 10) === currentStep);
+        const completionUrl = currentOutline instanceof HTMLElement ? (currentOutline.dataset.stepUrl || '') : '';
+        if (completionUrl !== '') {
+          window.location.assign(`${completionUrl}#completion-panel`);
+        }
       }
     };
 

@@ -31,6 +31,45 @@ function app_url(string $path = ''): string
     return app_base_path() . $path;
 }
 
+function app_url_with_query(string $url, array $params = [], string $fragment = ''): string
+{
+    $parts = parse_url($url);
+    $query = [];
+
+    if (!empty($parts['query'])) {
+        parse_str($parts['query'], $query);
+    }
+
+    foreach ($params as $key => $value) {
+        $query[$key] = $value;
+    }
+
+    $rebuilt = '';
+
+    if (!empty($parts['scheme'])) {
+        $rebuilt .= $parts['scheme'] . '://';
+    }
+    if (!empty($parts['host'])) {
+        $rebuilt .= $parts['host'];
+    }
+    if (!empty($parts['port'])) {
+        $rebuilt .= ':' . $parts['port'];
+    }
+
+    $rebuilt .= $parts['path'] ?? '';
+
+    if (!empty($query)) {
+        $rebuilt .= '?' . http_build_query($query);
+    }
+
+    $targetFragment = $fragment !== '' ? $fragment : ($parts['fragment'] ?? '');
+    if ($targetFragment !== '') {
+        $rebuilt .= '#' . ltrim($targetFragment, '#');
+    }
+
+    return $rebuilt;
+}
+
 function app_config(): array
 {
     static $config = null;
