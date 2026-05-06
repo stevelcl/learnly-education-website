@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/admin-shell.php';
 require_once __DIR__ . '/includes/csrf.php';
 $user = require_admin();
 
@@ -33,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'page' => $_GET['page'] ?? 1,
         'notice' => 'updated',
     ];
-    header('Location: admin-orders.php?' . http_build_query($redirectParams));
-    exit;
-}
+        header('Location: ' . app_url_with_query(app_url('admin/orders'), $redirectParams));
+        exit;
+    }
 
 $allowedViews = ['active', 'history', 'all'];
 if (!in_array($view, $allowedViews, true)) {
@@ -124,22 +125,22 @@ if ($orders) {
     }
 }
 
-$pageTitle = 'Manage Orders';
-include __DIR__ . '/includes/header.php';
+admin_render_start([
+    'title' => 'Orders',
+    'page_title' => 'Orders',
+    'page_subtitle' => 'Filter, update, and inspect customer orders from one dense fulfillment view.',
+    'active_nav' => 'orders',
+    'breadcrumbs' => [
+        ['label' => 'Dashboard', 'href' => app_url('admin')],
+        ['label' => 'Orders'],
+    ],
+    'notice' => $message,
+    'user' => $user,
+]);
 ?>
 
-<section class="section">
-    <div class="container">
-        <div class="section-head">
-            <div>
-                <span class="eyebrow">Admin Orders</span>
-                <h1>Track purchases and run fulfilment like a proper storefront.</h1>
-            </div>
-            <a class="button ghost" href="admin-dashboard.php">Back to Admin</a>
-        </div>
-        <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
-
-        <form class="panel order-filter-form" method="get">
+<section class="panel">
+        <form class="admin-filter-bar order-filter-form" method="get">
             <label>Search
                 <input name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Order ID, customer name, email, or address">
             </label>
@@ -162,11 +163,12 @@ include __DIR__ . '/includes/header.php';
             </label>
             <div class="form-actions">
                 <button type="submit">Apply</button>
-                <a class="button ghost" href="admin-orders.php">Reset</a>
+                <a class="button ghost" href="<?= htmlspecialchars(app_url('admin/orders')) ?>">Reset</a>
             </div>
         </form>
+</section>
 
-        <div class="section-head compact">
+        <div class="admin-panel-header">
             <div>
                 <span class="eyebrow"><?= htmlspecialchars(ucfirst($view)) ?></span>
                 <h2><?= $totalRows ?> order<?= $totalRows === 1 ? '' : 's' ?> matched</h2>
@@ -251,16 +253,14 @@ include __DIR__ . '/includes/header.php';
                 $prevParams = http_build_query(array_merge($baseParams, ['page' => max(1, $page - 1)]));
                 $nextParams = http_build_query(array_merge($baseParams, ['page' => min($totalPages, $page + 1)]));
                 ?>
-                <a class="button ghost small <?= $page <= 1 ? 'disabled-link' : '' ?>" href="<?= $page <= 1 ? '#' : 'admin-orders.php?' . $prevParams ?>">Previous</a>
+                <a class="button ghost small <?= $page <= 1 ? 'disabled-link' : '' ?>" href="<?= $page <= 1 ? '#' : app_url('admin/orders') . '?' . $prevParams ?>">Previous</a>
                 <div class="pagination-pages">
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <a class="pagination-page <?= $i === $page ? 'active' : '' ?>" href="admin-orders.php?<?= http_build_query(array_merge($baseParams, ['page' => $i])) ?>"><?= $i ?></a>
+                        <a class="pagination-page <?= $i === $page ? 'active' : '' ?>" href="<?= htmlspecialchars(app_url('admin/orders') . '?' . http_build_query(array_merge($baseParams, ['page' => $i]))) ?>"><?= $i ?></a>
                     <?php endfor; ?>
                 </div>
-                <a class="button ghost small <?= $page >= $totalPages ? 'disabled-link' : '' ?>" href="<?= $page >= $totalPages ? '#' : 'admin-orders.php?' . $nextParams ?>">Next</a>
+                <a class="button ghost small <?= $page >= $totalPages ? 'disabled-link' : '' ?>" href="<?= $page >= $totalPages ? '#' : app_url('admin/orders') . '?' . $nextParams ?>">Next</a>
             </div>
         <?php endif; ?>
-    </div>
-</section>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php admin_render_end(); ?>

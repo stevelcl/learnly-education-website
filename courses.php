@@ -69,6 +69,11 @@ include __DIR__ . '/includes/header.php';
                 ?>
                 <article class="card course-catalog-card">
                     <a class="stretched-link" href="<?= htmlspecialchars(course_url((int) $course['id'])) ?>" aria-label="Open course overview: <?= htmlspecialchars($course['title']) ?>"></a>
+                    <?php if (!empty($course['thumbnail_path'])): ?>
+                        <div class="course-card-image-wrap">
+                            <img class="course-card-image" src="<?= htmlspecialchars($course['thumbnail_path']) ?>" alt="<?= htmlspecialchars($course['title']) ?>">
+                        </div>
+                    <?php endif; ?>
                     <div class="card-topline">
                         <div class="course-card-top-tags">
                             <span class="tag"><?= htmlspecialchars($course['subject']) ?></span>

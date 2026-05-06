@@ -136,6 +136,81 @@ function ensure_runtime_schema(PDO $pdo): void
 
     ensure_order_status_states($pdo);
 
+    ensure_column(
+        $pdo,
+        'courses',
+        'thumbnail_path',
+        'ALTER TABLE courses ADD COLUMN thumbnail_path VARCHAR(255) NULL AFTER level'
+    );
+    ensure_column(
+        $pdo,
+        'courses',
+        'banner_path',
+        'ALTER TABLE courses ADD COLUMN banner_path VARCHAR(255) NULL AFTER thumbnail_path'
+    );
+    ensure_column(
+        $pdo,
+        'course_resources',
+        'attachment_path',
+        'ALTER TABLE course_resources ADD COLUMN attachment_path VARCHAR(255) NULL AFTER resource_url'
+    );
+    ensure_column(
+        $pdo,
+        'course_resources',
+        'thumbnail_path',
+        'ALTER TABLE course_resources ADD COLUMN thumbnail_path VARCHAR(255) NULL AFTER attachment_path'
+    );
+    ensure_column(
+        $pdo,
+        'quiz_questions',
+        'title',
+        'ALTER TABLE quiz_questions ADD COLUMN title VARCHAR(160) NULL AFTER course_id'
+    );
+    ensure_column(
+        $pdo,
+        'quiz_questions',
+        'explanation',
+        'ALTER TABLE quiz_questions ADD COLUMN explanation TEXT NULL AFTER correct_option'
+    );
+    ensure_column(
+        $pdo,
+        'quiz_questions',
+        'sort_order',
+        'ALTER TABLE quiz_questions ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER explanation'
+    );
+    ensure_column(
+        $pdo,
+        'forum_posts',
+        'category',
+        'ALTER TABLE forum_posts ADD COLUMN category VARCHAR(120) NULL AFTER course_id'
+    );
+    ensure_column(
+        $pdo,
+        'forum_posts',
+        'is_pinned',
+        'ALTER TABLE forum_posts ADD COLUMN is_pinned TINYINT(1) NOT NULL DEFAULT 0 AFTER status'
+    );
+    ensure_column(
+        $pdo,
+        'forum_posts',
+        'is_featured',
+        'ALTER TABLE forum_posts ADD COLUMN is_featured TINYINT(1) NOT NULL DEFAULT 0 AFTER is_pinned'
+    );
+    ensure_column(
+        $pdo,
+        'forum_posts',
+        'replies_locked',
+        'ALTER TABLE forum_posts ADD COLUMN replies_locked TINYINT(1) NOT NULL DEFAULT 0 AFTER is_featured'
+    );
+    ensure_column(
+        $pdo,
+        'forum_posts',
+        'report_count',
+        'ALTER TABLE forum_posts ADD COLUMN report_count INT NOT NULL DEFAULT 0 AFTER replies_locked'
+    );
+
+    $pdo->exec('UPDATE quiz_questions SET sort_order = id + 1000 WHERE sort_order = 0');
+
     $pdo->exec("UPDATE users SET role = 'student' WHERE role = 'moderator'");
 }
 

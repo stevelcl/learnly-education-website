@@ -48,7 +48,7 @@ $baseHref = app_base_path();
             <?php if ($user): ?>
                 <a href="dashboard.php">Dashboard</a>
                 <?php if (is_admin($user)): ?>
-                    <a href="admin-dashboard.php">Admin</a>
+                    <a href="<?= htmlspecialchars(app_url('admin')) ?>">Admin</a>
                 <?php endif; ?>
                 <a href="logout.php">Logout</a>
             <?php else: ?>

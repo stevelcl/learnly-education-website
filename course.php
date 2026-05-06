@@ -22,7 +22,7 @@ $resources = fetch_all(
      ORDER BY sort_order, id',
     [$courseId]
 );
-$questions = fetch_all('SELECT * FROM quiz_questions WHERE course_id = ? ORDER BY id', [$courseId]);
+$questions = fetch_all('SELECT * FROM quiz_questions WHERE course_id = ? ORDER BY sort_order, id', [$courseId]);
 
 $courseInsights = fetch_one(
     'SELECT
@@ -86,7 +86,7 @@ $primaryBadge = $badges[0] ?? '';
 
 $pageTitle = $course['title'];
 $showBackButton = true;
-$backTarget = $adminPreview ? 'admin-courses.php?edit=' . $courseId : 'courses.php';
+$backTarget = $adminPreview ? app_url('admin/course/' . $courseId) : 'courses.php';
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -99,6 +99,11 @@ include __DIR__ . '/includes/header.php';
         <div class="course-shell">
             <section class="course-overview">
                 <div class="course-hero">
+                    <?php if (!empty($course['banner_path'])): ?>
+                        <div class="course-hero-banner">
+                            <img src="<?= htmlspecialchars($course['banner_path']) ?>" alt="<?= htmlspecialchars($course['title']) ?>">
+                        </div>
+                    <?php endif; ?>
                     <div class="course-hero-copy">
                         <div class="course-hero-badges">
                             <span class="eyebrow"><?= htmlspecialchars($course['subject']) ?></span>
@@ -125,7 +130,7 @@ include __DIR__ . '/includes/header.php';
                         <div class="actions">
                             <?php if ($adminPreview): ?>
                                 <a class="button" href="<?= htmlspecialchars(learn_url($courseId, true)) ?>">Preview Learning Workspace</a>
-                                <a class="button ghost" href="admin-courses.php?edit=<?= $courseId ?>">Edit Course</a>
+                                <a class="button ghost" href="<?= htmlspecialchars(app_url('admin/course/' . $courseId)) ?>">Edit Course</a>
                             <?php elseif (!$user): ?>
                                 <a class="button" href="login.php">Login to Enroll</a>
                             <?php elseif (!$isEnrolled): ?>

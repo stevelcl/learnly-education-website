@@ -40,7 +40,7 @@ $resources = fetch_all(
      ORDER BY sort_order, id',
     [$courseId]
 );
-$questions = fetch_all('SELECT * FROM quiz_questions WHERE course_id = ? ORDER BY id', [$courseId]);
+$questions = fetch_all('SELECT * FROM quiz_questions WHERE course_id = ? ORDER BY sort_order, id', [$courseId]);
 $curriculum = course_curriculum_items($resources, $questions);
 
 $courseInsights = fetch_one(
@@ -172,13 +172,16 @@ $message = $noticeMap[$_GET['notice'] ?? ''] ?? '';
 $quizResult = $_GET['quiz_result'] ?? '';
 $answeredQuizId = (int) ($_GET['answered'] ?? 0);
 $answeredQuestion = $answeredQuizId
-    ? fetch_one('SELECT question, correct_option FROM quiz_questions WHERE id = ? AND course_id = ?', [$answeredQuizId, $courseId])
+    ? fetch_one('SELECT question, correct_option, explanation FROM quiz_questions WHERE id = ? AND course_id = ?', [$answeredQuizId, $courseId])
     : null;
 $quizFeedback = '';
 if ($answeredQuestion && in_array($quizResult, ['correct', 'incorrect'], true)) {
     $quizFeedback = $quizResult === 'correct'
         ? 'Answer recorded. Nice work.'
         : 'Answer recorded. The correct option for "' . $answeredQuestion['question'] . '" is ' . $answeredQuestion['correct_option'] . '.';
+    if (trim((string) ($answeredQuestion['explanation'] ?? '')) !== '') {
+        $quizFeedback .= ' ' . trim((string) $answeredQuestion['explanation']);
+    }
 }
 if ($quizResult === 'invalid') {
     $quizFeedback = 'Choose an answer before moving to the next lesson.';
@@ -312,6 +315,10 @@ include __DIR__ . '/includes/header.php';
                             <div class="learning-complete-marker" data-complete-trigger></div>
                         <?php endif; ?>
 
+                        <?php if (($currentItem['attachment_path'] ?? '') !== ''): ?>
+                            <p><a href="<?= htmlspecialchars($currentItem['attachment_path']) ?>" target="_blank" rel="noopener">Open attached file</a></p>
+                        <?php endif; ?>
+
                         <?php if (!$adminPreview): ?>
                             <p class="learning-status-hint" data-completion-hint>
                                 <?= $currentItem['label'] === 'Video'
@@ -401,7 +408,7 @@ include __DIR__ . '/includes/header.php';
                 <?php if ($adminPreview): ?>
                     <div class="panel">
                         <h2>Admin Tools</h2>
-                        <a class="button small" href="admin-courses.php?edit=<?= $courseId ?>">Back to course management</a>
+                        <a class="button small" href="<?= htmlspecialchars(app_url('admin/course/' . $courseId . '/resources')) ?>">Back to course management</a>
                     </div>
                 <?php elseif ($courseComplete): ?>
                     <div class="panel course-completion-side">

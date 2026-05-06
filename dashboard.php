@@ -107,7 +107,7 @@ include __DIR__ . '/includes/header.php';
                 <article class="panel">
                     <h2>Administration</h2>
                     <p class="muted">This account can manage users, courses, books, orders, and moderation.</p>
-                    <a class="button small" href="admin-dashboard.php">Open Admin Panel</a>
+                    <a class="button small" href="<?= htmlspecialchars(app_url('admin')) ?>">Open Admin Panel</a>
                 </article>
             <?php endif; ?>
         </div>

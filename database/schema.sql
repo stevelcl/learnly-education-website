@@ -26,6 +26,8 @@ CREATE TABLE courses (
     subject VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
     level VARCHAR(80) NOT NULL,
+    thumbnail_path VARCHAR(255),
+    banner_path VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -36,6 +38,8 @@ CREATE TABLE course_resources (
     resource_type ENUM('note', 'video', 'quiz') NOT NULL,
     content TEXT NOT NULL,
     resource_url VARCHAR(255),
+    attachment_path VARCHAR(255),
+    thumbnail_path VARCHAR(255),
     sort_order INT NOT NULL DEFAULT 0,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
@@ -43,11 +47,14 @@ CREATE TABLE course_resources (
 CREATE TABLE quiz_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     course_id INT NOT NULL,
+    title VARCHAR(160) NULL,
     question TEXT NOT NULL,
     option_a VARCHAR(255) NOT NULL,
     option_b VARCHAR(255) NOT NULL,
     option_c VARCHAR(255) NOT NULL,
     correct_option CHAR(1) NOT NULL,
+    explanation TEXT,
+    sort_order INT NOT NULL DEFAULT 0,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
 
@@ -192,11 +199,11 @@ INSERT INTO course_resources (course_id, title, resource_type, content, resource
 (3, 'Video: SQL Joins Explained', 'video', 'Understand INNER JOIN, LEFT JOIN, and relationship queries.', 'https://www.youtube.com/embed/9Pzj7Aj25lw', 2),
 (4, 'Lecture Note: Hypothesis Testing', 'note', 'Hypothesis testing helps researchers decide whether sample results support a claim.', NULL, 1);
 
-INSERT INTO quiz_questions (course_id, question, option_a, option_b, option_c, correct_option) VALUES
-(2, 'Which structure repeats code while a condition is true?', 'Loop', 'Array', 'Function', 'A'),
-(2, 'Which data type stores true or false values?', 'String', 'Boolean', 'Float', 'B'),
-(3, 'What is the main purpose of normalization?', 'Increase duplication', 'Reduce redundancy', 'Remove all keys', 'B'),
-(4, 'A p-value is commonly used to help decide whether to:', 'Format a table', 'Reject or fail to reject a hypothesis', 'Choose a font', 'B');
+INSERT INTO quiz_questions (course_id, title, question, option_a, option_b, option_c, correct_option, explanation, sort_order) VALUES
+(2, 'Loop Basics', 'Which structure repeats code while a condition is true?', 'Loop', 'Array', 'Function', 'A', 'Loops repeat a block of code while a condition remains true.', 20),
+(2, 'Boolean Values', 'Which data type stores true or false values?', 'String', 'Boolean', 'Float', 'B', 'Boolean values are designed specifically for true/false logic.', 30),
+(3, 'Normalization Goal', 'What is the main purpose of normalization?', 'Increase duplication', 'Reduce redundancy', 'Remove all keys', 'B', 'Normalization organizes related data to reduce redundancy and improve consistency.', 30),
+(4, 'P-Value Use', 'A p-value is commonly used to help decide whether to:', 'Format a table', 'Reject or fail to reject a hypothesis', 'Choose a font', 'B', 'Researchers use the p-value during hypothesis testing to judge statistical evidence.', 20);
 
 INSERT INTO books (title, author, category, description, price, inventory, cover_url) VALUES
 ('Writing for University Success', 'Maya Collins', 'Communication', 'A practical guide to academic essays, reports, and citation habits.', 42.50, 18, 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80'),

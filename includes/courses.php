@@ -54,6 +54,9 @@ function course_curriculum_items(array $resources, array $questions): array
             'label' => ucfirst((string) $resource['resource_type']),
             'content' => (string) $resource['content'],
             'resource_url' => (string) ($resource['resource_url'] ?? ''),
+            'attachment_path' => (string) ($resource['attachment_path'] ?? ''),
+            'thumbnail_path' => (string) ($resource['thumbnail_path'] ?? ''),
+            'sort_order' => (int) ($resource['sort_order'] ?? 0),
         ];
     }
 
@@ -61,15 +64,30 @@ function course_curriculum_items(array $resources, array $questions): array
         $items[] = [
             'type' => 'quiz',
             'id' => (int) $question['id'],
-            'title' => 'Quiz Checkpoint ' . ($index + 1),
+            'title' => trim((string) ($question['title'] ?? '')) !== ''
+                ? (string) $question['title']
+                : 'Quiz Checkpoint ' . ($index + 1),
             'label' => 'Quiz',
             'question' => (string) $question['question'],
             'option_a' => (string) $question['option_a'],
             'option_b' => (string) $question['option_b'],
             'option_c' => (string) $question['option_c'],
             'correct_option' => (string) $question['correct_option'],
+            'explanation' => (string) ($question['explanation'] ?? ''),
+            'sort_order' => (int) (($question['sort_order'] ?? 0) ?: (1000 + $index)),
         ];
     }
+
+    usort($items, static function (array $left, array $right): int {
+        $leftOrder = (int) ($left['sort_order'] ?? 0);
+        $rightOrder = (int) ($right['sort_order'] ?? 0);
+
+        if ($leftOrder === $rightOrder) {
+            return ((int) $left['id']) <=> ((int) $right['id']);
+        }
+
+        return $leftOrder <=> $rightOrder;
+    });
 
     return $items;
 }

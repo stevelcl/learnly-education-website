@@ -12,7 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const coverPreview = document.querySelector('[data-cover-preview]');
   const revealItems = document.querySelectorAll('[data-reveal]');
   const learningShell = document.querySelector('[data-learning-shell]');
+  const sortableList = document.querySelector('[data-sortable-list]');
+  const adminSidebar = document.querySelector('[data-admin-sidebar]');
+  const adminSidebarToggle = document.querySelector('[data-admin-sidebar-toggle]');
+  const adminSidebarClose = document.querySelector('[data-admin-sidebar-close]');
+  const adminConfirmModal = document.querySelector('[data-admin-confirm-modal]');
+  const adminConfirmMessage = document.querySelector('[data-admin-confirm-message]');
+  const adminConfirmAccept = document.querySelector('[data-admin-confirm-accept]');
+  const adminConfirmCancel = document.querySelector('[data-admin-confirm-cancel]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let pendingConfirmAction = null;
 
   const syncHeaderState = () => {
     if (!(header instanceof HTMLElement)) {
@@ -417,6 +426,105 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  if (sortableList instanceof HTMLElement) {
+    const orderInput = document.querySelector('[data-order-input]');
+    let draggedItem = null;
+
+    const syncSortableOrder = () => {
+      if (!(orderInput instanceof HTMLInputElement)) {
+        return;
+      }
+
+      const tokens = Array.from(sortableList.querySelectorAll('[data-sort-token]'))
+        .map((item) => item.getAttribute('data-sort-token') || '')
+        .filter((value) => value !== '');
+      orderInput.value = tokens.join(',');
+    };
+
+    sortableList.querySelectorAll('[data-sort-token]').forEach((item) => {
+      if (!(item instanceof HTMLElement)) {
+        return;
+      }
+
+      item.addEventListener('dragstart', () => {
+        draggedItem = item;
+        item.classList.add('is-dragging');
+      });
+
+      item.addEventListener('dragend', () => {
+        item.classList.remove('is-dragging');
+        draggedItem = null;
+        syncSortableOrder();
+      });
+
+      item.addEventListener('dragover', (event) => {
+        event.preventDefault();
+      });
+
+      item.addEventListener('drop', (event) => {
+        event.preventDefault();
+        if (!(draggedItem instanceof HTMLElement) || draggedItem === item) {
+          return;
+        }
+
+        const itemRect = item.getBoundingClientRect();
+        const insertAfter = event.clientY > itemRect.top + (itemRect.height / 2);
+        if (insertAfter) {
+          item.after(draggedItem);
+        } else {
+          item.before(draggedItem);
+        }
+
+        syncSortableOrder();
+      });
+    });
+  }
+
+  if (adminSidebar instanceof HTMLElement && adminSidebarToggle instanceof HTMLButtonElement) {
+    const closeAdminSidebar = () => {
+      adminSidebar.classList.remove('open');
+      document.body.classList.remove('admin-sidebar-open');
+    };
+
+    adminSidebarToggle.addEventListener('click', () => {
+      adminSidebar.classList.add('open');
+      document.body.classList.add('admin-sidebar-open');
+    });
+
+    if (adminSidebarClose instanceof HTMLButtonElement) {
+      adminSidebarClose.addEventListener('click', closeAdminSidebar);
+    }
+
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Node) || window.innerWidth > 980) {
+        return;
+      }
+
+      if (
+        adminSidebar.classList.contains('open') &&
+        !adminSidebar.contains(target) &&
+        !adminSidebarToggle.contains(target)
+      ) {
+        closeAdminSidebar();
+      }
+    });
+  }
+
+  document.querySelectorAll('[data-admin-toast]').forEach((toast) => {
+    if (!(toast instanceof HTMLElement)) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      toast.classList.add('is-visible');
+    }, 30);
+
+    window.setTimeout(() => {
+      toast.classList.remove('is-visible');
+    }, 3600);
+  });
+
   document.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
@@ -426,7 +534,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmButton = target.closest('[data-confirm]');
     if (confirmButton instanceof HTMLElement) {
       const message = confirmButton.getAttribute('data-confirm') || '';
-      if (message !== '' && !window.confirm(message)) {
+      if (message === '') {
+        return;
+      }
+
+      if (
+        adminConfirmModal instanceof HTMLElement &&
+        adminConfirmMessage instanceof HTMLElement &&
+        adminConfirmAccept instanceof HTMLButtonElement &&
+        adminConfirmCancel instanceof HTMLButtonElement
+      ) {
+        event.preventDefault();
+        adminConfirmMessage.textContent = message;
+        adminConfirmModal.hidden = false;
+        const form = confirmButton.closest('form');
+        pendingConfirmAction = () => {
+          if (form instanceof HTMLFormElement) {
+            form.submit();
+          } else if (confirmButton instanceof HTMLAnchorElement) {
+            window.location.assign(confirmButton.href);
+          }
+        };
+
+        return;
+      }
+
+      if (!window.confirm(message)) {
         event.preventDefault();
         return;
       }
@@ -453,6 +586,33 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.textContent = showPassword ? 'Hide' : 'Show';
   });
 
+  if (
+    adminConfirmModal instanceof HTMLElement &&
+    adminConfirmAccept instanceof HTMLButtonElement &&
+    adminConfirmCancel instanceof HTMLButtonElement
+  ) {
+    const closeAdminConfirm = () => {
+      adminConfirmModal.hidden = true;
+      pendingConfirmAction = null;
+    };
+
+    adminConfirmAccept.addEventListener('click', () => {
+      const action = pendingConfirmAction;
+      closeAdminConfirm();
+      if (typeof action === 'function') {
+        action();
+      }
+    });
+
+    adminConfirmCancel.addEventListener('click', closeAdminConfirm);
+
+    adminConfirmModal.addEventListener('click', (event) => {
+      if (event.target === adminConfirmModal) {
+        closeAdminConfirm();
+      }
+    });
+  }
+
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') {
       return;
@@ -466,6 +626,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nav instanceof HTMLElement && navToggle instanceof HTMLButtonElement) {
       nav.classList.remove('open');
       navToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    if (adminConfirmModal instanceof HTMLElement && !adminConfirmModal.hidden) {
+      adminConfirmModal.hidden = true;
+      pendingConfirmAction = null;
     }
   });
 });

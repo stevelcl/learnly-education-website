@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/admin-shell.php';
 require_once __DIR__ . '/includes/csrf.php';
 $user = require_admin();
 
@@ -21,21 +22,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $users = fetch_all('SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC');
-$pageTitle = 'Manage Users';
-include __DIR__ . '/includes/header.php';
+admin_render_start([
+    'title' => 'Users',
+    'page_title' => 'Users',
+    'page_subtitle' => 'Manage access roles from a compact table instead of oversized profile cards.',
+    'active_nav' => 'students',
+    'breadcrumbs' => [
+        ['label' => 'Dashboard', 'href' => app_url('admin')],
+        ['label' => 'Users'],
+    ],
+    'notice' => $message,
+    'user' => $user,
+]);
 ?>
 
-<section class="section">
-    <div class="container">
-        <div class="section-head">
-            <div>
-                <span class="eyebrow">Admin Users</span>
-                <h1>Manage roles and registered accounts.</h1>
-            </div>
-            <a class="button ghost" href="admin-dashboard.php">Back to Admin</a>
-        </div>
+<section class="panel admin-data-table">
         <p class="muted">Moderator has been removed from active use. Access is now either student or admin.</p>
-        <?php if ($message): ?><p class="alert success"><?= htmlspecialchars($message) ?></p><?php endif; ?>
         <table>
             <thead>
                 <tr>
@@ -68,7 +70,6 @@ include __DIR__ . '/includes/header.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
 </section>
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<?php admin_render_end(); ?>
