@@ -2539,6 +2539,10 @@ body.admin-app {
     backdrop-filter: blur(8px);
 }
 
+.admin-confirm-modal[hidden] {
+    display: none !important;
+}
+
 .admin-confirm-card {
     width: min(420px, 100%);
     padding: 1.2rem;
