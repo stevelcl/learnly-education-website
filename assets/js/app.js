@@ -586,29 +586,33 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.textContent = showPassword ? 'Hide' : 'Show';
   });
 
-  if (
-    adminConfirmModal instanceof HTMLElement &&
-    adminConfirmAccept instanceof HTMLButtonElement &&
-    adminConfirmCancel instanceof HTMLButtonElement
-  ) {
-    const closeAdminConfirm = () => {
-      adminConfirmModal.hidden = true;
-      pendingConfirmAction = null;
-    };
+  const closeAdminConfirm = () => {
+    if (!(adminConfirmModal instanceof HTMLElement)) {
+      return;
+    }
 
-    adminConfirmAccept.addEventListener('click', () => {
-      const action = pendingConfirmAction;
-      closeAdminConfirm();
-      if (typeof action === 'function') {
-        action();
-      }
-    });
+    adminConfirmModal.hidden = true;
+    pendingConfirmAction = null;
+  };
 
-    adminConfirmCancel.addEventListener('click', closeAdminConfirm);
-
+  if (adminConfirmModal instanceof HTMLElement) {
     adminConfirmModal.addEventListener('click', (event) => {
-      if (event.target === adminConfirmModal) {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (target === adminConfirmModal || target.closest('[data-admin-confirm-cancel]')) {
         closeAdminConfirm();
+        return;
+      }
+
+      if (target.closest('[data-admin-confirm-accept]')) {
+        const action = pendingConfirmAction;
+        closeAdminConfirm();
+        if (typeof action === 'function') {
+          action();
+        }
       }
     });
   }
