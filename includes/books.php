@@ -1,8 +1,9 @@
 <?php
+require_once __DIR__ . '/config-helper.php';
 
 function book_url(int $bookId): string
 {
-    return 'book/' . $bookId;
+    return app_url('book/' . $bookId);
 }
 
 function render_stars(float $rating): string

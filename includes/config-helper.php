@@ -1,5 +1,36 @@
 <?php
 
+function app_base_path(): string
+{
+    static $basePath = null;
+
+    if ($basePath !== null) {
+        return $basePath;
+    }
+
+    $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $directory = rtrim(dirname($scriptName), '/');
+
+    if ($directory === '' || $directory === '.') {
+        $basePath = '/';
+        return $basePath;
+    }
+
+    $basePath = $directory . '/';
+    return $basePath;
+}
+
+function app_url(string $path = ''): string
+{
+    $path = ltrim($path, '/');
+
+    if ($path === '') {
+        return app_base_path();
+    }
+
+    return app_base_path() . $path;
+}
+
 function app_config(): array
 {
     static $config = null;

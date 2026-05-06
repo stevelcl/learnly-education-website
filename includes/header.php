@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/config-helper.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/cart.php';
 
@@ -9,8 +10,7 @@ $pageTitle = $pageTitle ?? 'Learnly';
 $user = current_user();
 $showBackButton = $showBackButton ?? ($pageTitle !== 'Home');
 $backTarget = $backTarget ?? 'index.php';
-$baseHref = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
-$baseHref = $baseHref === '' ? '/' : $baseHref . '/';
+$baseHref = app_base_path();
 ?>
 <!doctype html>
 <html lang="en">

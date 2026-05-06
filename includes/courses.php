@@ -1,8 +1,9 @@
 <?php
+require_once __DIR__ . '/config-helper.php';
 
 function course_url(int $courseId, bool $adminPreview = false): string
 {
-    $url = 'course.php?id=' . $courseId;
+    $url = app_url('course.php?id=' . $courseId);
     if ($adminPreview) {
         $url .= '&admin_preview=1';
     }
@@ -11,7 +12,7 @@ function course_url(int $courseId, bool $adminPreview = false): string
 
 function learn_url(int $courseId, bool $adminPreview = false): string
 {
-    $url = 'learn/' . $courseId;
+    $url = app_url('learn/' . $courseId);
     if ($adminPreview) {
         $url .= '?admin_preview=1';
     }
