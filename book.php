@@ -108,6 +108,7 @@ $relatedBooks = fetch_all(
 $pageTitle = $book['title'];
 $showBackButton = true;
 $backTarget = 'bookstore.php';
+$leadDescriptionParts = text_teaser_parts((string) $book['description'], 220);
 include __DIR__ . '/includes/header.php';
 ?>
 
@@ -139,14 +140,27 @@ include __DIR__ . '/includes/header.php';
                     <span class="muted"><?= htmlspecialchars(rating_label((float) $book['avg_rating'], (int) $book['review_count'])) ?></span>
                 </div>
                 <div class="book-detail-price">RM <?= number_format((float) $book['price'], 2) ?></div>
-                <p class="book-detail-lead"><?= htmlspecialchars($book['description']) ?></p>
+                <div class="expandable-copy-block detail">
+                    <p class="book-detail-lead expandable-copy<?= $leadDescriptionParts['truncated'] ? ' is-collapsed' : '' ?>" data-expandable-text>
+                        <?= htmlspecialchars($leadDescriptionParts['full']) ?>
+                    </p>
+                    <?php if ($leadDescriptionParts['truncated']): ?>
+                        <button
+                            type="button"
+                            class="teaser-toggle light"
+                            data-expandable-toggle
+                            data-more-label="See More"
+                            data-less-label="See Less"
+                        >See More</button>
+                    <?php endif; ?>
+                </div>
 
                 <form method="post" class="book-purchase-form">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="add_to_cart">
                     <label>
                         Quantity
-                        <input type="number" name="quantity" value="1" min="1" max="<?= max(1, (int) $book['inventory']) ?>">
+                        <input class="quantity-input" type="number" name="quantity" value="1" min="1" max="<?= max(1, (int) $book['inventory']) ?>">
                     </label>
                     <button type="submit" <?= (int) $book['inventory'] <= 0 ? 'disabled' : '' ?>>Add to Cart</button>
                 </form>

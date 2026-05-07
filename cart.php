@@ -55,7 +55,7 @@ include __DIR__ . '/includes/header.php';
                             <tr>
                                 <td><img src="<?= htmlspecialchars(book_cover_src($book['cover_url'])) ?>" alt="<?= htmlspecialchars($book['title']) ?>" class="cart-book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';"><?= htmlspecialchars($book['title']) ?></td>
                                 <td>RM <?= number_format((float) $book['price'], 2) ?></td>
-                                <td><input type="number" name="quantities[<?= (int) $book['id'] ?>]" value="<?= (int) $book['quantity'] ?>" min="0" max="<?= (int) $book['inventory'] ?>"></td>
+                                <td><input class="quantity-input" type="number" name="quantities[<?= (int) $book['id'] ?>]" value="<?= (int) $book['quantity'] ?>" min="0" max="<?= (int) $book['inventory'] ?>"></td>
                                 <td>RM <?= number_format((float) $book['subtotal'], 2) ?></td>
                             </tr>
                         <?php endforeach; ?>

@@ -99,10 +99,20 @@ admin_render_start([
                             <?php if ($formValues['resource_type'] === 'video'): ?>
                                 <label class="admin-form-span-2">Video URL <input name="resource_url" value="<?= htmlspecialchars($formValues['resource_url']) ?>" required></label>
                                 <label class="admin-form-span-2">Description <textarea name="content"><?= htmlspecialchars($formValues['content']) ?></textarea></label>
-                                <label>Thumbnail image <input name="thumbnail_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+                                <label>Thumbnail image
+                                    <div class="file-input-row">
+                                        <input name="thumbnail_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-file-input>
+                                        <button class="button ghost small" type="button" data-file-clear hidden>Remove</button>
+                                    </div>
+                                </label>
                             <?php else: ?>
                                 <label class="admin-form-span-2">Note content <textarea name="content" required><?= htmlspecialchars($formValues['content']) ?></textarea></label>
-                                <label>Attachment / PDF <input name="attachment_file" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>
+                                <label>Attachment / PDF
+                                    <div class="file-input-row">
+                                        <input name="attachment_file" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" data-file-input>
+                                        <button class="button ghost small" type="button" data-file-clear hidden>Remove</button>
+                                    </div>
+                                </label>
                             <?php endif; ?>
                         </div>
 

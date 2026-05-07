@@ -18,6 +18,11 @@ function admin_sidebar_items(): array
     ];
 }
 
+function admin_site_home_url(): string
+{
+    return app_url();
+}
+
 function admin_render_start(array $options): void
 {
     $title = $options['title'] ?? 'Admin';
@@ -62,6 +67,11 @@ function admin_render_start(array $options): void
                         <a class="<?= $activeNav === $key ? 'active' : '' ?>" href="<?= htmlspecialchars($item['href']) ?>"><?= htmlspecialchars($item['label']) ?></a>
                     <?php endforeach; ?>
                 </nav>
+                <div class="admin-sidebar-footer">
+                    <a class="button ghost small" href="<?= htmlspecialchars(app_url('admin')) ?>">Admin Home</a>
+                    <a class="button ghost small" href="<?= htmlspecialchars(admin_site_home_url()) ?>">Visit Site</a>
+                    <a class="button ghost small" href="<?= htmlspecialchars(app_url('logout.php')) ?>">Logout</a>
+                </div>
             </aside>
 
             <div class="admin-app-main">
@@ -88,9 +98,11 @@ function admin_render_start(array $options): void
                         </div>
                     </div>
                     <div class="admin-topbar-actions">
+                        <a class="button ghost small" href="<?= htmlspecialchars(app_url('admin')) ?>">Admin Home</a>
                         <?php foreach ($actions as $action): ?>
                             <a class="button<?= !empty($action['secondary']) ? ' ghost' : '' ?>" href="<?= htmlspecialchars($action['href']) ?>"><?= htmlspecialchars($action['label']) ?></a>
                         <?php endforeach; ?>
+                        <a class="button ghost small" href="<?= htmlspecialchars(app_url('logout.php')) ?>">Logout</a>
                         <?php if ($adminUser): ?>
                             <div class="admin-user-chip">
                                 <strong><?= htmlspecialchars($adminUser['name']) ?></strong>

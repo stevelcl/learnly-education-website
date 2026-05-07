@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const resourcePanels = document.querySelectorAll('[data-resource-fields]');
   const coverFileInput = document.querySelector('[data-cover-file-input]');
   const coverPreview = document.querySelector('[data-cover-preview]');
+  const fileInputs = Array.from(document.querySelectorAll('[data-file-input]'));
   const revealItems = document.querySelectorAll('[data-reveal]');
   const learningShell = document.querySelector('[data-learning-shell]');
   const sortableList = document.querySelector('[data-sortable-list]');
@@ -212,6 +213,54 @@ document.addEventListener('DOMContentLoaded', () => {
     syncCoverPreview();
     coverFileInput.addEventListener('change', syncCoverPreview);
   }
+
+  if (fileInputs.length > 0) {
+    fileInputs.forEach((input) => {
+      if (!(input instanceof HTMLInputElement)) {
+        return;
+      }
+
+      const row = input.closest('.file-input-row');
+      const clearButton = row ? row.querySelector('[data-file-clear]') : null;
+      const syncFileRow = () => {
+        if (!(clearButton instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        clearButton.hidden = !(input.files && input.files.length > 0);
+      };
+
+      syncFileRow();
+      input.addEventListener('change', syncFileRow);
+
+      if (clearButton instanceof HTMLButtonElement) {
+        clearButton.addEventListener('click', () => {
+          input.value = '';
+          syncFileRow();
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      }
+    });
+  }
+
+  document.querySelectorAll('[data-expandable-toggle]').forEach((toggle) => {
+    if (!(toggle instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    toggle.addEventListener('click', () => {
+      const block = toggle.closest('.expandable-copy-block');
+      const text = block ? block.querySelector('[data-expandable-text]') : null;
+      if (!(text instanceof HTMLElement)) {
+        return;
+      }
+
+      const collapsed = text.classList.toggle('is-collapsed');
+      const moreLabel = toggle.dataset.moreLabel || 'See More';
+      const lessLabel = toggle.dataset.lessLabel || 'See Less';
+      toggle.textContent = collapsed ? moreLabel : lessLabel;
+    });
+  });
 
   if (learningShell instanceof HTMLElement && learningShell.dataset.adminPreview !== '1') {
     const progressEndpoint = learningShell.dataset.progressEndpoint || '';

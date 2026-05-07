@@ -138,26 +138,36 @@ admin_render_start([
                             <label>Course title <input name="title" value="<?= htmlspecialchars($formValues['title']) ?>" required></label>
                             <label>Subject <input name="subject" value="<?= htmlspecialchars($formValues['subject']) ?>" required></label>
                             <label>Level <input name="level" value="<?= htmlspecialchars($formValues['level']) ?>" required></label>
-                            <label>Thumbnail image <input name="thumbnail_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
-                            <label class="admin-form-span-2">Banner image <input name="banner_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+                            <label>Primary course image
+                                <div class="file-input-row">
+                                    <input name="thumbnail_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-file-input>
+                                    <button class="button ghost small" type="button" data-file-clear hidden>Remove</button>
+                                </div>
+                            </label>
+                            <label class="admin-form-span-2">Hero banner image <span class="muted">(optional)</span>
+                                <div class="file-input-row">
+                                    <input name="banner_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-file-input>
+                                    <button class="button ghost small" type="button" data-file-clear hidden>Remove</button>
+                                </div>
+                            </label>
                             <label class="admin-form-span-2">Description <textarea name="description" required><?= htmlspecialchars($formValues['description']) ?></textarea></label>
                         </div>
 
                         <div class="admin-asset-preview-grid">
                             <div class="panel admin-asset-preview">
-                                <span class="eyebrow">Thumbnail</span>
+                                <span class="eyebrow">Primary Image</span>
                                 <?php if ($formValues['thumbnail_path'] !== ''): ?>
                                     <img src="<?= htmlspecialchars($formValues['thumbnail_path']) ?>" alt="Course thumbnail preview">
                                 <?php else: ?>
-                                    <p class="muted">Upload a thumbnail to support richer course cards and previews.</p>
+                                    <p class="muted">This image is used for course cards and as the default visual if no banner is uploaded.</p>
                                 <?php endif; ?>
                             </div>
                             <div class="panel admin-asset-preview">
-                                <span class="eyebrow">Banner</span>
+                                <span class="eyebrow">Hero Banner</span>
                                 <?php if ($formValues['banner_path'] !== ''): ?>
                                     <img src="<?= htmlspecialchars($formValues['banner_path']) ?>" alt="Course banner preview">
                                 <?php else: ?>
-                                    <p class="muted">Upload a banner to strengthen the course detail hero.</p>
+                                    <p class="muted">Optional. If left empty, Learnly will reuse the primary course image on the course detail page.</p>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -237,14 +247,24 @@ admin_render_start([
                             <div data-resource-fields="note">
                                 <label>Note title <input name="note_title"></label>
                                 <label>Note content <textarea name="note_content"></textarea></label>
-                                <label>Attachment / PDF <input name="note_attachment" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>
+                                <label>Attachment / PDF
+                                    <div class="file-input-row">
+                                        <input name="note_attachment" type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" data-file-input>
+                                        <button class="button ghost small" type="button" data-file-clear hidden>Remove</button>
+                                    </div>
+                                </label>
                             </div>
 
                             <div data-resource-fields="video" hidden>
                                 <label>Video title <input name="video_title"></label>
                                 <label>Video URL <input name="video_url" placeholder="https://www.youtube.com/watch?v=..."></label>
                                 <label>Description <textarea name="video_description"></textarea></label>
-                                <label>Thumbnail <input name="video_thumbnail" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+                                <label>Thumbnail
+                                    <div class="file-input-row">
+                                        <input name="video_thumbnail" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-file-input>
+                                        <button class="button ghost small" type="button" data-file-clear hidden>Remove</button>
+                                    </div>
+                                </label>
                             </div>
 
                             <div data-resource-fields="quiz" hidden>

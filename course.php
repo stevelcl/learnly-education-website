@@ -83,6 +83,8 @@ $badges = course_badges([
     'review_count' => $reviewCount,
 ]);
 $primaryBadge = $badges[0] ?? '';
+$leadDescriptionParts = text_teaser_parts((string) $course['description'], 240);
+$heroImage = trim((string) (($course['banner_path'] ?? '') !== '' ? $course['banner_path'] : ($course['thumbnail_path'] ?? '')));
 
 $pageTitle = $course['title'];
 $showBackButton = true;
@@ -99,9 +101,9 @@ include __DIR__ . '/includes/header.php';
         <div class="course-shell">
             <section class="course-overview">
                 <div class="course-hero">
-                    <?php if (!empty($course['banner_path'])): ?>
+                    <?php if ($heroImage !== ''): ?>
                         <div class="course-hero-banner">
-                            <img src="<?= htmlspecialchars($course['banner_path']) ?>" alt="<?= htmlspecialchars($course['title']) ?>">
+                            <img src="<?= htmlspecialchars($heroImage) ?>" alt="<?= htmlspecialchars($course['title']) ?>">
                         </div>
                     <?php endif; ?>
                     <div class="course-hero-copy">
@@ -112,7 +114,20 @@ include __DIR__ . '/includes/header.php';
                             <?php endif; ?>
                         </div>
                         <h1><?= htmlspecialchars($course['title']) ?></h1>
-                        <p class="course-lead"><?= htmlspecialchars($course['description']) ?></p>
+                        <div class="expandable-copy-block detail">
+                            <p class="course-lead expandable-copy<?= $leadDescriptionParts['truncated'] ? ' is-collapsed' : '' ?>" data-expandable-text>
+                                <?= htmlspecialchars($leadDescriptionParts['full']) ?>
+                            </p>
+                            <?php if ($leadDescriptionParts['truncated']): ?>
+                                <button
+                                    type="button"
+                                    class="teaser-toggle light"
+                                    data-expandable-toggle
+                                    data-more-label="See More"
+                                    data-less-label="See Less"
+                                >See More</button>
+                            <?php endif; ?>
+                        </div>
                         <div class="course-rating-row">
                             <div class="rating-inline">
                                 <span class="stars" aria-hidden="true"><?= htmlspecialchars(course_star_text($averageRating)) ?></span>

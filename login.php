@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/includes/cart.php';
 
@@ -19,7 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
         sync_session_cart_to_user((int) $user['id']);
-        header('Location: dashboard.php');
+        $requestedTarget = app_safe_redirect_target($_SESSION['post_login_redirect'] ?? '', '');
+        unset($_SESSION['post_login_redirect']);
+
+        if ($user['role'] === 'admin') {
+            $redirectTarget = ($requestedTarget !== '' && str_contains($requestedTarget, '/admin'))
+                ? $requestedTarget
+                : app_url('admin');
+        } else {
+            $redirectTarget = ($requestedTarget !== '' && !str_contains($requestedTarget, '/admin'))
+                ? $requestedTarget
+                : app_url('dashboard.php');
+        }
+
+        header('Location: ' . $redirectTarget);
         exit;
     }
 }

@@ -778,6 +778,18 @@ button:active {
     pointer-events: none;
 }
 
+.book-card .expandable-copy-block,
+.course-catalog-card .expandable-copy-block {
+    pointer-events: auto;
+}
+
+.book-card .teaser-toggle,
+.course-catalog-card .teaser-toggle {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+}
+
 .book-card-image-wrap {
     overflow: hidden;
     border-radius: 20px;
@@ -805,6 +817,51 @@ button:active {
 .book-card-description {
     margin: 0;
     color: var(--muted);
+}
+
+.expandable-copy-block {
+    display: grid;
+    gap: 0.35rem;
+    align-items: start;
+}
+
+.expandable-copy {
+    margin: 0;
+}
+
+.expandable-copy.is-collapsed {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+}
+
+.expandable-copy-block.detail .expandable-copy.is-collapsed {
+    -webkit-line-clamp: 4;
+}
+
+.teaser-toggle {
+    justify-self: start;
+    padding: 0;
+    min-height: auto;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--brand-strong);
+    font-size: 0.92rem;
+    font-weight: 800;
+}
+
+.teaser-toggle:hover,
+.teaser-toggle:focus-visible {
+    transform: none;
+    box-shadow: none;
+    filter: none;
+    text-decoration: underline;
+}
+
+.teaser-toggle.light {
+    color: #ffffff;
 }
 
 .book-card-footer {
@@ -1154,10 +1211,28 @@ button:active {
 }
 
 .book-purchase-form {
+    display: grid;
     grid-template-columns: minmax(120px, 180px) auto;
     align-items: end;
     gap: 0.85rem;
     margin-top: 1rem;
+}
+
+.book-purchase-form label {
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 700;
+}
+
+.quantity-input,
+.book-purchase-form input[type="number"] {
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--ink);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    opacity: 1;
 }
 
 .book-purchase-form button {
@@ -2289,6 +2364,13 @@ body.admin-app {
     gap: 0.35rem;
 }
 
+.admin-sidebar-footer {
+    margin-top: auto;
+    display: grid;
+    gap: 0.6rem;
+    padding-top: 1rem;
+}
+
 .admin-app-nav a {
     display: flex;
     align-items: center;
@@ -2337,6 +2419,42 @@ body.admin-app {
 .admin-topbar-actions {
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.input-with-prefix {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: stretch;
+}
+
+.input-prefix {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    padding: 0 0.85rem;
+    border: 1px solid rgba(123, 149, 196, 0.18);
+    border-right: 0;
+    border-radius: 14px 0 0 14px;
+    background: rgba(237, 244, 255, 0.76);
+    color: var(--brand-strong);
+    font-weight: 800;
+}
+
+.input-with-prefix input {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.file-input-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.file-input-row input[type="file"] {
+    flex: 1 1 220px;
 }
 
 .admin-page-heading h1 {

@@ -66,6 +66,7 @@ include __DIR__ . '/includes/header.php';
                 $roundedRating = number_format((float) $course['average_rating'], 1);
                 $badges = course_badges($course);
                 $primaryBadge = $badges[0] ?? '';
+                $descriptionParts = text_teaser_parts((string) $course['description'], 146);
                 ?>
                 <article class="card course-catalog-card">
                     <a class="stretched-link" href="<?= htmlspecialchars(course_url((int) $course['id'])) ?>" aria-label="Open course overview: <?= htmlspecialchars($course['title']) ?>"></a>
@@ -84,7 +85,20 @@ include __DIR__ . '/includes/header.php';
                         <span class="course-card-duration"><?= $courseMinutes ?> mins</span>
                     </div>
                     <h2><?= htmlspecialchars($course['title']) ?></h2>
-                    <p><?= htmlspecialchars($course['description']) ?></p>
+                    <div class="expandable-copy-block">
+                        <p class="expandable-copy<?= $descriptionParts['truncated'] ? ' is-collapsed' : '' ?>" data-expandable-text>
+                            <?= htmlspecialchars($descriptionParts['full']) ?>
+                        </p>
+                        <?php if ($descriptionParts['truncated']): ?>
+                            <button
+                                type="button"
+                                class="teaser-toggle"
+                                data-expandable-toggle
+                                data-more-label="See More"
+                                data-less-label="See Less"
+                            >See More</button>
+                        <?php endif; ?>
+                    </div>
 
                     <div class="course-card-trust">
                         <div class="course-trust-block">

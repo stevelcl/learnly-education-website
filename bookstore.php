@@ -71,6 +71,7 @@ include __DIR__ . '/includes/header.php';
 
         <div class="grid book-grid book-catalog-grid">
             <?php foreach ($books as $index => $book): ?>
+                <?php $descriptionParts = text_teaser_parts((string) $book['description'], 132); ?>
                 <article class="card book-card" data-reveal="slide-up" data-reveal-delay="<?= $index ?>">
                     <a class="stretched-link" href="<?= htmlspecialchars(book_url((int) $book['id'])) ?>" aria-label="View <?= htmlspecialchars($book['title']) ?>"></a>
                     <div class="book-card-image-wrap">
@@ -87,7 +88,20 @@ include __DIR__ . '/includes/header.php';
                             <span class="stars" aria-hidden="true"><?= htmlspecialchars(render_stars((float) $book['avg_rating'])) ?></span>
                             <span><?= htmlspecialchars(rating_label((float) $book['avg_rating'], (int) $book['review_count'])) ?></span>
                         </div>
-                        <p class="book-card-description"><?= htmlspecialchars($book['description']) ?></p>
+                        <div class="expandable-copy-block">
+                            <p class="book-card-description expandable-copy<?= $descriptionParts['truncated'] ? ' is-collapsed' : '' ?>" data-expandable-text>
+                                <?= htmlspecialchars($descriptionParts['full']) ?>
+                            </p>
+                            <?php if ($descriptionParts['truncated']): ?>
+                                <button
+                                    type="button"
+                                    class="teaser-toggle"
+                                    data-expandable-toggle
+                                    data-more-label="See More"
+                                    data-less-label="See Less"
+                                >See More</button>
+                            <?php endif; ?>
+                        </div>
                         <div class="book-card-footer">
                             <span class="stock-chip <?= (int) $book['inventory'] > 0 ? 'in-stock' : 'out-of-stock' ?>">
                                 <?= (int) $book['inventory'] > 0 ? (int) $book['inventory'] . ' in stock' : 'Out of stock' ?>

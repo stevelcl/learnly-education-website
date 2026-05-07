@@ -3,6 +3,11 @@ session_start();
 require_once __DIR__ . '/includes/auth.php';
 $user = require_login();
 
+if (is_admin($user)) {
+    header('Location: ' . app_url('admin'));
+    exit;
+}
+
 $progressRows = fetch_all(
     'SELECT c.id, c.title, c.subject, up.saved, up.updated_at,
             COALESCE(cp.completed_items, 0) AS completed_items,

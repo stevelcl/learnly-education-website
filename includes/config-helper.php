@@ -70,6 +70,77 @@ function app_url_with_query(string $url, array $params = [], string $fragment = 
     return $rebuilt;
 }
 
+function app_request_uri(): string
+{
+    return (string) ($_SERVER['REQUEST_URI'] ?? app_base_path());
+}
+
+function app_safe_redirect_target(?string $target, string $fallback = ''): string
+{
+    $fallback = $fallback !== '' ? $fallback : app_url();
+    $target = trim((string) $target);
+    if ($target === '') {
+        return $fallback;
+    }
+
+    $parts = parse_url($target);
+    if ($parts === false || isset($parts['scheme']) || isset($parts['host'])) {
+        return $fallback;
+    }
+
+    $path = (string) ($parts['path'] ?? '');
+    if ($path === '') {
+        $path = app_base_path();
+    }
+
+    $basePath = rtrim(app_base_path(), '/');
+    if ($basePath !== '' && $basePath !== '/' && !str_starts_with($path, $basePath . '/') && $path !== $basePath) {
+        return $fallback;
+    }
+
+    $rebuilt = $path;
+    if (!empty($parts['query'])) {
+        $rebuilt .= '?' . $parts['query'];
+    }
+    if (!empty($parts['fragment'])) {
+        $rebuilt .= '#' . ltrim((string) $parts['fragment'], '#');
+    }
+
+    return $rebuilt;
+}
+
+function text_teaser_parts(string $text, int $limit = 180): array
+{
+    $fullText = trim((string) preg_replace('/\s+/u', ' ', $text));
+    if ($fullText === '') {
+        return [
+            'full' => '',
+            'preview' => '',
+            'truncated' => false,
+        ];
+    }
+
+    if (mb_strlen($fullText) <= $limit) {
+        return [
+            'full' => $fullText,
+            'preview' => $fullText,
+            'truncated' => false,
+        ];
+    }
+
+    $preview = mb_substr($fullText, 0, $limit);
+    $preview = (string) preg_replace('/\s+\S*$/u', '', $preview);
+    if ($preview === '') {
+        $preview = mb_substr($fullText, 0, $limit);
+    }
+
+    return [
+        'full' => $fullText,
+        'preview' => rtrim($preview, " \t\n\r\0\x0B.,;:") . '...',
+        'truncated' => true,
+    ];
+}
+
 function app_config(): array
 {
     static $config = null;

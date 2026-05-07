@@ -58,9 +58,19 @@ admin_render_start([
             <label>Title <input name="title" value="<?= htmlspecialchars($formValues['title']) ?>" required></label>
             <label>Author <input name="author" value="<?= htmlspecialchars($formValues['author']) ?>" required></label>
             <label>Category <input name="category" value="<?= htmlspecialchars($formValues['category']) ?>" required></label>
-            <label>Price <input name="price" type="number" step="0.01" min="0" value="<?= htmlspecialchars($formValues['price']) ?>" required></label>
+            <label>Price
+                <div class="input-with-prefix">
+                    <span class="input-prefix">RM</span>
+                    <input name="price" type="number" step="0.01" min="0" value="<?= htmlspecialchars($formValues['price']) ?>" required>
+                </div>
+            </label>
             <label>Inventory <input name="inventory" type="number" min="0" value="<?= htmlspecialchars($formValues['inventory']) ?>" required></label>
-            <label>Cover Image <input name="cover_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+            <label>Cover Image
+                <div class="file-input-row">
+                    <input name="cover_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-file-input>
+                    <button class="button ghost small" type="button" data-file-clear hidden>Remove</button>
+                </div>
+            </label>
             <label class="admin-form-span-2">Description <textarea name="description" required><?= htmlspecialchars($formValues['description']) ?></textarea></label>
         </div>
 
