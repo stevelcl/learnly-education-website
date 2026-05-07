@@ -60,8 +60,8 @@ function should_run_runtime_schema(): bool
         return $shouldRun;
     }
 
-    if (app_is_local_environment()) {
-        $shouldRun = true;
+    if (!app_is_local_environment()) {
+        $shouldRun = false;
         return $shouldRun;
     }
 
