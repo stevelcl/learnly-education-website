@@ -53,19 +53,29 @@ $courseInsights = fetch_one(
      FROM courses c
      LEFT JOIN course_resources cr ON cr.course_id = c.id
      LEFT JOIN quiz_questions qq ON qq.course_id = c.id
-     LEFT JOIN course_enrollments ce ON ce.course_id = c.id
-     LEFT JOIN course_reviews rv ON rv.course_id = c.id
+     LEFT JOIN course_enrollments ce ON ce.course_id = c.id AND ce.archived_at IS NULL
+     LEFT JOIN course_reviews rv ON rv.course_id = c.id AND rv.moderation_status = "published" AND rv.deleted_at IS NULL
      WHERE c.id = ?
      GROUP BY c.id',
     [$courseId]
 );
 
 $userReview = ($user && !$adminPreview)
-    ? fetch_one('SELECT * FROM course_reviews WHERE user_id = ? AND course_id = ?', [(int) $user['id'], $courseId])
+    ? fetch_one(
+        'SELECT *
+         FROM course_reviews
+         WHERE user_id = ? AND course_id = ? AND (deleted_at IS NULL OR moderation_status <> "removed")',
+        [(int) $user['id'], $courseId]
+    )
     : null;
 
 $progress = ($user && !$adminPreview)
-    ? fetch_one('SELECT * FROM user_progress WHERE user_id = ? AND course_id = ?', [(int) $user['id'], $courseId])
+    ? fetch_one(
+        'SELECT *
+         FROM user_progress
+         WHERE user_id = ? AND course_id = ? AND archived_at IS NULL',
+        [(int) $user['id'], $courseId]
+    )
     : null;
 $progressRows = ($user && !$adminPreview)
     ? fetch_all('SELECT item_type, item_id FROM course_item_progress WHERE user_id = ? AND course_id = ?', [(int) $user['id'], $courseId])
@@ -148,9 +158,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rating = max(1, min(5, (int) ($_POST['rating'] ?? 0)));
         $comment = trim($_POST['comment'] ?? '');
         $stmt = db()->prepare(
-            'INSERT INTO course_reviews (user_id, course_id, rating, comment)
-             VALUES (?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment), updated_at = CURRENT_TIMESTAMP'
+            'INSERT INTO course_reviews (user_id, course_id, rating, comment, moderation_status, deleted_at)
+             VALUES (?, ?, ?, ?, "published", NULL)
+             ON DUPLICATE KEY UPDATE
+                rating = VALUES(rating),
+                comment = VALUES(comment),
+                moderation_status = "published",
+                deleted_at = NULL,
+                updated_at = CURRENT_TIMESTAMP'
         );
         $stmt->execute([(int) $user['id'], $courseId, $rating, $comment]);
         header('Location: ' . $stepUrl($step, ['notice' => 'review_saved'], 'completion-panel'));

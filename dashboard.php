@@ -15,6 +15,7 @@ $progressRows = fetch_all(
             COALESCE(up.progress_percent, 0) AS progress_percent
      FROM user_progress up
      JOIN courses c ON c.id = up.course_id
+     JOIN course_enrollments ce ON ce.user_id = up.user_id AND ce.course_id = up.course_id AND ce.archived_at IS NULL
      LEFT JOIN (
         SELECT user_id, course_id, COUNT(*) AS completed_items
         FROM course_item_progress
@@ -29,21 +30,21 @@ $progressRows = fetch_all(
         ) grouped
         GROUP BY grouped.course_id
      ) ct ON ct.course_id = up.course_id
-     WHERE up.user_id = ?
+     WHERE up.user_id = ? AND up.archived_at IS NULL
      ORDER BY up.updated_at DESC',
     [$user['id']]
 );
 
 $activeOrders = fetch_all(
     'SELECT * FROM orders
-     WHERE user_id = ? AND status IN ("paid", "processing", "shipped")
+     WHERE user_id = ? AND deleted_at IS NULL AND status IN ("pending", "paid", "processing", "shipped")
      ORDER BY created_at DESC
      LIMIT 5',
     [$user['id']]
 );
 $orderHistory = fetch_all(
     'SELECT * FROM orders
-     WHERE user_id = ? AND status IN ("delivered", "cancelled")
+     WHERE user_id = ? AND deleted_at IS NULL AND status IN ("delivered", "cancelled", "refunded", "archived")
      ORDER BY created_at DESC
      LIMIT 5',
     [$user['id']]

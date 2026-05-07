@@ -24,8 +24,8 @@ $courses = fetch_all(
      FROM courses c
      LEFT JOIN course_resources cr ON cr.course_id = c.id
      LEFT JOIN quiz_questions qq ON qq.course_id = c.id
-     LEFT JOIN course_enrollments ce ON ce.course_id = c.id
-     LEFT JOIN course_reviews rv ON rv.course_id = c.id
+     LEFT JOIN course_enrollments ce ON ce.course_id = c.id AND ce.archived_at IS NULL
+     LEFT JOIN course_reviews rv ON rv.course_id = c.id AND rv.moderation_status = "published" AND rv.deleted_at IS NULL
      ' . $where . '
      GROUP BY c.id
      ORDER BY COALESCE(AVG(rv.rating), 0) DESC, COUNT(DISTINCT ce.id) DESC, c.subject, c.title',

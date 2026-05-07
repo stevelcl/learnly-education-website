@@ -3,59 +3,96 @@ session_start();
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/admin-shell.php';
 require_once __DIR__ . '/includes/csrf.php';
-$user = require_admin();
 
+$user = require_admin();
 $view = $_GET['view'] ?? 'active';
 $statusFilter = $_GET['status'] ?? '';
 $search = trim($_GET['q'] ?? '');
 $page = max(1, (int) ($_GET['page'] ?? 1));
-$perPage = 8;
+$perPage = 10;
 
-$messageMap = [
-    'updated' => 'Order status updated.',
+$noticeMap = [
+    'updated' => 'Order updated successfully.',
+    'cancelled' => 'Order cancelled.',
+    'archived' => 'Order archived.',
+    'deleted' => 'Order removed from the active queue.',
 ];
-$message = $messageMap[$_GET['notice'] ?? ''] ?? '';
+$message = $noticeMap[$_GET['notice'] ?? ''] ?? '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verify_csrf();
-    $orderId = (int) ($_POST['order_id'] ?? 0);
-    $status = $_POST['status'] ?? 'processing';
-    $allowed = ['paid', 'processing', 'shipped', 'delivered', 'cancelled'];
-
-    if (in_array($status, $allowed, true)) {
-        $stmt = db()->prepare('UPDATE orders SET status = ? WHERE id = ?');
-        $stmt->execute([$status, $orderId]);
-    }
-
-    $redirectParams = [
-        'view' => $_GET['view'] ?? 'active',
-        'status' => $_GET['status'] ?? '',
-        'q' => $_GET['q'] ?? '',
-        'page' => $_GET['page'] ?? 1,
-        'notice' => 'updated',
-    ];
-        header('Location: ' . app_url_with_query(app_url('admin/orders'), $redirectParams));
-        exit;
-    }
-
+$allowedStatuses = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded', 'archived'];
 $allowedViews = ['active', 'history', 'all'];
 if (!in_array($view, $allowedViews, true)) {
     $view = 'active';
 }
-
-$allowedStatuses = ['paid', 'processing', 'shipped', 'delivered', 'cancelled'];
 if ($statusFilter !== '' && !in_array($statusFilter, $allowedStatuses, true)) {
     $statusFilter = '';
 }
 
-$where = [];
+$buildRedirect = static function (string $notice) use ($view, $statusFilter, $search, $page): string {
+    return app_url_with_query(app_url('admin/orders'), [
+        'view' => $view,
+        'status' => $statusFilter,
+        'q' => $search,
+        'page' => $page,
+        'notice' => $notice,
+    ]);
+};
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $orderId = (int) ($_POST['order_id'] ?? 0);
+    $action = $_POST['action'] ?? 'save_status';
+    $order = fetch_one('SELECT * FROM orders WHERE id = ?', [$orderId]);
+
+    if ($order) {
+        if ($action === 'save_status') {
+            $status = $_POST['status'] ?? 'pending';
+            if (in_array($status, $allowedStatuses, true)) {
+                db()->prepare(
+                    'UPDATE orders
+                     SET status = ?, deleted_at = NULL
+                     WHERE id = ?'
+                )->execute([$status, $orderId]);
+            }
+            header('Location: ' . $buildRedirect('updated'));
+            exit;
+        }
+
+        if ($action === 'cancel') {
+            db()->prepare('UPDATE orders SET status = "cancelled" WHERE id = ?')->execute([$orderId]);
+            header('Location: ' . $buildRedirect('cancelled'));
+            exit;
+        }
+
+        if ($action === 'archive') {
+            db()->prepare('UPDATE orders SET status = "archived" WHERE id = ?')->execute([$orderId]);
+            header('Location: ' . $buildRedirect('archived'));
+            exit;
+        }
+
+        if ($action === 'delete') {
+            db()->prepare(
+                'UPDATE orders
+                 SET status = "archived", deleted_at = NOW()
+                 WHERE id = ?'
+            )->execute([$orderId]);
+            header('Location: ' . $buildRedirect('deleted'));
+            exit;
+        }
+    }
+
+    header('Location: ' . $buildRedirect('updated'));
+    exit;
+}
+
+$where = ['o.deleted_at IS NULL'];
 $params = [];
 
 if ($view === 'active') {
-    $where[] = 'o.status IN ("paid", "processing", "shipped")';
+    $where[] = 'o.status IN ("pending", "paid", "processing", "shipped")';
 }
 if ($view === 'history') {
-    $where[] = 'o.status IN ("delivered", "cancelled")';
+    $where[] = 'o.status IN ("delivered", "cancelled", "refunded", "archived")';
 }
 if ($statusFilter !== '') {
     $where[] = 'o.status = ?';
@@ -74,8 +111,7 @@ if ($search !== '') {
     $params[] = $like;
 }
 
-$whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-
+$whereSql = 'WHERE ' . implode(' AND ', $where);
 $totalRows = (int) (fetch_one(
     'SELECT COUNT(*) AS total
      FROM orders o
@@ -93,16 +129,7 @@ $orders = fetch_all(
      FROM orders o
      JOIN users u ON u.id = o.user_id
      ' . $whereSql . '
-     ORDER BY
-        CASE
-            WHEN o.status = "processing" THEN 1
-            WHEN o.status = "paid" THEN 2
-            WHEN o.status = "shipped" THEN 3
-            WHEN o.status = "delivered" THEN 4
-            WHEN o.status = "cancelled" THEN 5
-            ELSE 6
-        END,
-        o.created_at DESC
+     ORDER BY o.created_at DESC
      LIMIT ' . (int) $perPage . ' OFFSET ' . (int) $offset,
     $params
 );
@@ -128,7 +155,7 @@ if ($orders) {
 admin_render_start([
     'title' => 'Orders',
     'page_title' => 'Orders',
-    'page_subtitle' => 'Filter, update, and inspect customer orders from one dense fulfillment view.',
+    'page_subtitle' => 'Manage fulfilment, cancellations, archives, and customer order history from one compact queue.',
     'active_nav' => 'orders',
     'breadcrumbs' => [
         ['label' => 'Dashboard', 'href' => app_url('admin')],
@@ -140,127 +167,136 @@ admin_render_start([
 ?>
 
 <section class="panel">
-        <form class="admin-filter-bar order-filter-form" method="get">
-            <label>Search
-                <input name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Order ID, customer name, email, or address">
-            </label>
-            <label>View
-                <select name="view">
-                    <option value="active" <?= $view === 'active' ? 'selected' : '' ?>>Active Queue</option>
-                    <option value="history" <?= $view === 'history' ? 'selected' : '' ?>>History</option>
-                    <option value="all" <?= $view === 'all' ? 'selected' : '' ?>>All Orders</option>
-                </select>
-            </label>
-            <label>Status
-                <select name="status">
-                    <option value="">All statuses</option>
-                    <?php foreach ($allowedStatuses as $statusOption): ?>
-                        <option value="<?= htmlspecialchars($statusOption) ?>" <?= $statusFilter === $statusOption ? 'selected' : '' ?>>
-                            <?= htmlspecialchars(ucfirst($statusOption)) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-            <div class="form-actions">
-                <button type="submit">Apply</button>
-                <a class="button ghost" href="<?= htmlspecialchars(app_url('admin/orders')) ?>">Reset</a>
-            </div>
-        </form>
+    <form class="admin-filter-bar" method="get">
+        <label>Search
+            <input name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Order ID, customer, email, or address">
+        </label>
+        <label>Queue
+            <select name="view">
+                <option value="active" <?= $view === 'active' ? 'selected' : '' ?>>Active queue</option>
+                <option value="history" <?= $view === 'history' ? 'selected' : '' ?>>History</option>
+                <option value="all" <?= $view === 'all' ? 'selected' : '' ?>>All orders</option>
+            </select>
+        </label>
+        <label>Status
+            <select name="status">
+                <option value="">All statuses</option>
+                <?php foreach ($allowedStatuses as $statusOption): ?>
+                    <option value="<?= htmlspecialchars($statusOption) ?>" <?= $statusFilter === $statusOption ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($statusOption)) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <div class="form-actions">
+            <button type="submit">Apply</button>
+            <a class="button ghost" href="<?= htmlspecialchars(app_url('admin/orders')) ?>">Reset</a>
+        </div>
+    </form>
 </section>
 
-        <div class="admin-panel-header">
-            <div>
-                <span class="eyebrow"><?= htmlspecialchars(ucfirst($view)) ?></span>
-                <h2><?= $totalRows ?> order<?= $totalRows === 1 ? '' : 's' ?> matched</h2>
-            </div>
-            <p class="muted">
-                <?php if ($totalRows > 0): ?>
-                    Showing <?= $offset + 1 ?>-<?= min($offset + $perPage, $totalRows) ?> of <?= $totalRows ?>
-                <?php else: ?>
-                    No orders match the current filters.
-                <?php endif; ?>
-            </p>
-        </div>
-
-        <div class="order-board">
-            <?php foreach ($orders as $order): ?>
-                <?php $items = $orderItemsByOrder[(int) $order['id']] ?? []; ?>
-                <article class="order-card">
-                    <div class="order-card-head">
-                        <div>
-                            <h3>Order #<?= (int) $order['id'] ?></h3>
-                            <p class="muted"><?= htmlspecialchars($order['created_at']) ?></p>
-                        </div>
-                        <span class="status-pill status-<?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars(ucfirst($order['status'])) ?></span>
-                    </div>
-
-                    <div class="order-card-grid">
-                        <div>
-                            <strong>Customer</strong>
-                            <p><?= htmlspecialchars($order['name']) ?><br><span class="muted"><?= htmlspecialchars($order['email']) ?></span></p>
-                        </div>
-                        <div>
-                            <strong>Delivery Address</strong>
-                            <p><?= nl2br(htmlspecialchars((string) ($order['delivery_address'] ?: 'Not provided'))) ?></p>
-                        </div>
-                        <div>
-                            <strong>Payment</strong>
-                            <p><?= htmlspecialchars((string) ($order['payment_method'] ?: 'Not provided')) ?></p>
-                        </div>
-                        <div>
-                            <strong>Total</strong>
-                            <p>RM <?= number_format((float) $order['total'], 2) ?></p>
-                        </div>
-                    </div>
-
-                    <div class="order-items-panel">
-                        <strong>Order Items</strong>
-                        <?php if (!$items): ?>
-                            <p class="muted">No order items found.</p>
-                        <?php else: ?>
-                            <div class="order-items-list">
-                                <?php foreach ($items as $item): ?>
-                                    <div class="order-item-row">
-                                        <span><?= htmlspecialchars($item['title']) ?></span>
-                                        <span class="muted">Qty <?= (int) $item['quantity'] ?></span>
-                                        <span>RM <?= number_format((float) $item['unit_price'], 2) ?></span>
+<section class="panel admin-data-table">
+    <?php if (!$orders): ?>
+        <div class="admin-empty-state"><strong>No orders found</strong><span>Try a broader filter or wait for new checkout activity.</span></div>
+    <?php else: ?>
+        <table class="admin-compact-table admin-orders-table">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($orders as $order): ?>
+                    <?php $items = $orderItemsByOrder[(int) $order['id']] ?? []; ?>
+                    <tr>
+                        <td><strong>#<?= (int) $order['id'] ?></strong></td>
+                        <td><?= htmlspecialchars($order['name']) ?><br><span class="muted"><?= htmlspecialchars($order['email']) ?></span></td>
+                        <td>RM <?= number_format((float) $order['total'], 2) ?></td>
+                        <td><span class="status-pill status-<?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars(ucfirst($order['status'])) ?></span></td>
+                        <td><?= htmlspecialchars((string) $order['created_at']) ?></td>
+                        <td>
+                            <details class="admin-inline-details">
+                                <summary class="button ghost small">View Details</summary>
+                                <div class="admin-inline-details-card">
+                                    <div class="admin-detail-grid">
+                                        <div>
+                                            <strong>Delivery Address</strong>
+                                            <p><?= nl2br(htmlspecialchars((string) ($order['delivery_address'] ?: 'Not provided'))) ?></p>
+                                        </div>
+                                        <div>
+                                            <strong>Payment Method</strong>
+                                            <p><?= htmlspecialchars((string) ($order['payment_method'] ?: 'Not provided')) ?></p>
+                                        </div>
                                     </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                                    <div class="admin-order-items">
+                                        <strong>Order Items</strong>
+                                        <?php if (!$items): ?>
+                                            <p class="muted">No items found for this order.</p>
+                                        <?php else: ?>
+                                            <?php foreach ($items as $item): ?>
+                                                <div class="admin-order-item-row">
+                                                    <span><?= htmlspecialchars($item['title']) ?></span>
+                                                    <span class="muted">Qty <?= (int) $item['quantity'] ?></span>
+                                                    <span>RM <?= number_format((float) $item['unit_price'], 2) ?></span>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="admin-table-actions">
+                                        <form method="post" class="inline-form compact-inline-form">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                            <input type="hidden" name="action" value="save_status">
+                                            <select name="status">
+                                                <?php foreach ($allowedStatuses as $statusOption): ?>
+                                                    <option value="<?= htmlspecialchars($statusOption) ?>" <?= $order['status'] === $statusOption ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($statusOption)) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <button type="submit" class="button ghost small">Save Status</button>
+                                        </form>
+                                        <form method="post" class="inline-form">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                            <input type="hidden" name="action" value="cancel">
+                                            <button type="submit" class="button ghost small" data-confirm="Cancel this order?">Cancel Order</button>
+                                        </form>
+                                        <form method="post" class="inline-form">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                            <input type="hidden" name="action" value="archive">
+                                            <button type="submit" class="button ghost small" data-confirm="Archive this order from the active queue?">Archive</button>
+                                        </form>
+                                        <form method="post" class="inline-form">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                            <input type="hidden" name="action" value="delete">
+                                            <button type="submit" class="button danger small" data-confirm="Hide this order from active management views? Order history will remain intact.">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
+</section>
 
-                    <form method="post" class="inline-form order-action-row">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                        <select name="status">
-                            <option value="paid" <?= $order['status'] === 'paid' ? 'selected' : '' ?>>Paid</option>
-                            <option value="processing" <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing</option>
-                            <option value="shipped" <?= $order['status'] === 'shipped' ? 'selected' : '' ?>>Shipped</option>
-                            <option value="delivered" <?= $order['status'] === 'delivered' ? 'selected' : '' ?>>Delivered</option>
-                            <option value="cancelled" <?= $order['status'] === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
-                        </select>
-                        <button type="submit">Save Status</button>
-                    </form>
-                </article>
-            <?php endforeach; ?>
+<?php if ($totalPages > 1): ?>
+    <div class="pagination-bar">
+        <?php $baseParams = ['view' => $view, 'status' => $statusFilter, 'q' => $search]; ?>
+        <a class="button ghost small <?= $page <= 1 ? 'disabled-link' : '' ?>" href="<?= $page <= 1 ? '#' : htmlspecialchars(app_url('admin/orders') . '?' . http_build_query(array_merge($baseParams, ['page' => $page - 1]))) ?>">Previous</a>
+        <div class="pagination-pages">
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <a class="pagination-page <?= $i === $page ? 'active' : '' ?>" href="<?= htmlspecialchars(app_url('admin/orders') . '?' . http_build_query(array_merge($baseParams, ['page' => $i]))) ?>"><?= $i ?></a>
+            <?php endfor; ?>
         </div>
-
-        <?php if ($totalPages > 1): ?>
-            <div class="pagination-bar">
-                <?php
-                $baseParams = ['view' => $view, 'status' => $statusFilter, 'q' => $search];
-                $prevParams = http_build_query(array_merge($baseParams, ['page' => max(1, $page - 1)]));
-                $nextParams = http_build_query(array_merge($baseParams, ['page' => min($totalPages, $page + 1)]));
-                ?>
-                <a class="button ghost small <?= $page <= 1 ? 'disabled-link' : '' ?>" href="<?= $page <= 1 ? '#' : app_url('admin/orders') . '?' . $prevParams ?>">Previous</a>
-                <div class="pagination-pages">
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <a class="pagination-page <?= $i === $page ? 'active' : '' ?>" href="<?= htmlspecialchars(app_url('admin/orders') . '?' . http_build_query(array_merge($baseParams, ['page' => $i]))) ?>"><?= $i ?></a>
-                    <?php endfor; ?>
-                </div>
-                <a class="button ghost small <?= $page >= $totalPages ? 'disabled-link' : '' ?>" href="<?= $page >= $totalPages ? '#' : app_url('admin/orders') . '?' . $nextParams ?>">Next</a>
-            </div>
-        <?php endif; ?>
+        <a class="button ghost small <?= $page >= $totalPages ? 'disabled-link' : '' ?>" href="<?= $page >= $totalPages ? '#' : htmlspecialchars(app_url('admin/orders') . '?' . http_build_query(array_merge($baseParams, ['page' => $page + 1]))) ?>">Next</a>
+    </div>
+<?php endif; ?>
 
 <?php admin_render_end(); ?>

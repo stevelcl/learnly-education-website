@@ -141,8 +141,8 @@ function admin_fetch_course_catalog(): array
          FROM courses c
          LEFT JOIN course_resources cr ON cr.course_id = c.id
          LEFT JOIN quiz_questions qq ON qq.course_id = c.id
-         LEFT JOIN course_enrollments ce ON ce.course_id = c.id
-         LEFT JOIN course_reviews rv ON rv.course_id = c.id
+         LEFT JOIN course_enrollments ce ON ce.course_id = c.id AND ce.archived_at IS NULL
+         LEFT JOIN course_reviews rv ON rv.course_id = c.id AND rv.moderation_status = "published" AND rv.deleted_at IS NULL
          GROUP BY c.id
          ORDER BY c.created_at DESC'
     );
@@ -165,8 +165,8 @@ function admin_fetch_course_metrics(int $courseId): array
          FROM courses c
          LEFT JOIN course_resources cr ON cr.course_id = c.id
          LEFT JOIN quiz_questions qq ON qq.course_id = c.id
-         LEFT JOIN course_enrollments ce ON ce.course_id = c.id
-         LEFT JOIN course_reviews rv ON rv.course_id = c.id
+         LEFT JOIN course_enrollments ce ON ce.course_id = c.id AND ce.archived_at IS NULL
+         LEFT JOIN course_reviews rv ON rv.course_id = c.id AND rv.moderation_status = "published" AND rv.deleted_at IS NULL
          WHERE c.id = ?
          GROUP BY c.id',
         [$courseId]
@@ -266,7 +266,7 @@ function admin_fetch_course_students(int $courseId): array
          FROM course_enrollments ce
          JOIN users u ON u.id = ce.user_id
          LEFT JOIN user_progress up ON up.user_id = ce.user_id AND up.course_id = ce.course_id
-         WHERE ce.course_id = ?
+         WHERE ce.course_id = ? AND ce.archived_at IS NULL
          ORDER BY ce.enrolled_at DESC',
         [$courseId]
     );
@@ -275,10 +275,10 @@ function admin_fetch_course_students(int $courseId): array
 function admin_fetch_course_feedback(int $courseId): array
 {
     return fetch_all(
-        'SELECT rv.rating, rv.comment, rv.updated_at, u.name, u.email
+        'SELECT rv.rating, rv.comment, rv.updated_at, rv.moderation_status, u.name, u.email
          FROM course_reviews rv
          JOIN users u ON u.id = rv.user_id
-         WHERE rv.course_id = ?
+         WHERE rv.course_id = ? AND rv.deleted_at IS NULL
          ORDER BY rv.updated_at DESC',
         [$courseId]
     );
@@ -585,4 +585,3 @@ function admin_course_nav_items(int $courseId): array
         'feedback' => ['label' => 'Feedback', 'href' => admin_course_url($courseId, 'feedback')],
     ];
 }
-

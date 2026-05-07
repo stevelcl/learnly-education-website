@@ -8,7 +8,12 @@ function current_user(): ?array
         return null;
     }
 
-    return fetch_one('SELECT id, name, email, role FROM users WHERE id = ?', [$_SESSION['user_id']]);
+    return fetch_one(
+        'SELECT id, name, email, role, account_status
+         FROM users
+         WHERE id = ? AND deleted_at IS NULL AND account_status <> "deleted"',
+        [$_SESSION['user_id']]
+    );
 }
 
 function require_login(): array
@@ -18,6 +23,15 @@ function require_login(): array
         if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'GET') {
             $_SESSION['post_login_redirect'] = app_safe_redirect_target(app_request_uri(), app_url('dashboard.php'));
         }
+        header('Location: ' . app_url('login.php'));
+        exit;
+    }
+
+    if (($user['account_status'] ?? 'active') === 'suspended') {
+        $_SESSION = [];
+        session_destroy();
+        session_start();
+        $_SESSION['login_error'] = 'This account is suspended. Please contact an administrator.';
         header('Location: ' . app_url('login.php'));
         exit;
     }

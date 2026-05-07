@@ -34,8 +34,8 @@ $courseInsights = fetch_one(
      FROM courses c
      LEFT JOIN course_resources cr ON cr.course_id = c.id
      LEFT JOIN quiz_questions qq ON qq.course_id = c.id
-     LEFT JOIN course_enrollments ce ON ce.course_id = c.id
-     LEFT JOIN course_reviews rv ON rv.course_id = c.id
+     LEFT JOIN course_enrollments ce ON ce.course_id = c.id AND ce.archived_at IS NULL
+     LEFT JOIN course_reviews rv ON rv.course_id = c.id AND rv.moderation_status = "published" AND rv.deleted_at IS NULL
      WHERE c.id = ?
      GROUP BY c.id',
     [$courseId]
@@ -46,6 +46,8 @@ $reviews = fetch_all(
      FROM course_reviews rv
      INNER JOIN users u ON u.id = rv.user_id
      WHERE rv.course_id = ?
+       AND rv.moderation_status = "published"
+       AND rv.deleted_at IS NULL
      ORDER BY rv.updated_at DESC
      LIMIT 6',
     [$courseId]

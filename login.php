@@ -6,7 +6,8 @@ require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/includes/cart.php';
 
 $pageTitle = 'Login';
-$error = '';
+$error = $_SESSION['login_error'] ?? '';
+unset($_SESSION['login_error']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -16,6 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$user || !password_verify($password, $user['password_hash'])) {
         $error = 'Invalid email or password.';
+    } elseif (($user['account_status'] ?? 'active') === 'suspended') {
+        $error = 'This account is suspended. Please contact an administrator.';
+    } elseif (($user['account_status'] ?? 'active') === 'deleted' || !empty($user['deleted_at'])) {
+        $error = 'This account is no longer available.';
     } else {
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];

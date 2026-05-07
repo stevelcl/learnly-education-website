@@ -6,10 +6,10 @@ require_once __DIR__ . '/includes/admin-shell.php';
 $user = require_admin();
 
 $stats = [
-    'users' => (int) (fetch_one('SELECT COUNT(*) AS total FROM users')['total'] ?? 0),
+    'users' => (int) (fetch_one('SELECT COUNT(*) AS total FROM users WHERE deleted_at IS NULL AND account_status <> "deleted"')['total'] ?? 0),
     'courses' => (int) (fetch_one('SELECT COUNT(*) AS total FROM courses')['total'] ?? 0),
     'books' => (int) (fetch_one('SELECT COUNT(*) AS total FROM books')['total'] ?? 0),
-    'orders' => (int) (fetch_one('SELECT COUNT(*) AS total FROM orders')['total'] ?? 0),
+    'orders' => (int) (fetch_one('SELECT COUNT(*) AS total FROM orders WHERE deleted_at IS NULL')['total'] ?? 0),
     'forum_posts' => (int) (fetch_one('SELECT COUNT(*) AS total FROM forum_posts')['total'] ?? 0),
 ];
 
@@ -17,6 +17,7 @@ $recentOrders = fetch_all(
     'SELECT o.id, o.total, o.status, o.created_at, u.name
      FROM orders o
      JOIN users u ON u.id = o.user_id
+     WHERE o.deleted_at IS NULL
      ORDER BY o.created_at DESC
      LIMIT 5'
 );
@@ -25,6 +26,7 @@ $recentEnrollments = fetch_all(
      FROM course_enrollments ce
      JOIN users u ON u.id = ce.user_id
      JOIN courses c ON c.id = ce.course_id
+     WHERE ce.archived_at IS NULL
      ORDER BY ce.enrolled_at DESC
      LIMIT 5'
 );
@@ -33,6 +35,7 @@ $recentFeedback = fetch_all(
      FROM course_reviews cr
      JOIN users u ON u.id = cr.user_id
      JOIN courses c ON c.id = cr.course_id
+     WHERE cr.moderation_status = "published" AND cr.deleted_at IS NULL
      ORDER BY cr.updated_at DESC
      LIMIT 5'
 );

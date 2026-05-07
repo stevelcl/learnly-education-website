@@ -21,6 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$user || !password_verify($password, $user['password_hash']) || $user['role'] !== 'admin') {
         $error = 'Admin access requires a valid administrator account.';
+    } elseif (($user['account_status'] ?? 'active') === 'suspended') {
+        $error = 'This administrator account is suspended.';
+    } elseif (($user['account_status'] ?? 'active') === 'deleted' || !empty($user['deleted_at'])) {
+        $error = 'This administrator account is no longer available.';
     } else {
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];

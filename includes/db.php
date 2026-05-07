@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config-helper.php';
 
-const LEARNLY_RUNTIME_SCHEMA_VERSION = 2;
+const LEARNLY_RUNTIME_SCHEMA_VERSION = 4;
 
 function db(): PDO
 {
@@ -181,6 +181,25 @@ function ensure_runtime_schema(PDO $pdo): void
 
     ensure_column(
         $pdo,
+        'users',
+        'account_status',
+        "ALTER TABLE users ADD COLUMN account_status ENUM('active', 'suspended', 'deleted') NOT NULL DEFAULT 'active' AFTER role"
+    );
+    ensure_column(
+        $pdo,
+        'users',
+        'suspended_at',
+        'ALTER TABLE users ADD COLUMN suspended_at DATETIME NULL AFTER account_status'
+    );
+    ensure_column(
+        $pdo,
+        'users',
+        'deleted_at',
+        'ALTER TABLE users ADD COLUMN deleted_at DATETIME NULL AFTER suspended_at'
+    );
+
+    ensure_column(
+        $pdo,
         'orders',
         'delivery_address',
         'ALTER TABLE orders ADD COLUMN delivery_address TEXT NULL AFTER status'
@@ -194,6 +213,13 @@ function ensure_runtime_schema(PDO $pdo): void
 
     ensure_order_status_states($pdo);
     ensure_order_item_book_reference($pdo);
+
+    ensure_column(
+        $pdo,
+        'orders',
+        'deleted_at',
+        'ALTER TABLE orders ADD COLUMN deleted_at DATETIME NULL AFTER payment_method'
+    );
 
     ensure_column(
         $pdo,
@@ -239,6 +265,32 @@ function ensure_runtime_schema(PDO $pdo): void
     );
     ensure_column(
         $pdo,
+        'course_reviews',
+        'moderation_status',
+        "ALTER TABLE course_reviews ADD COLUMN moderation_status ENUM('published', 'hidden', 'flagged', 'removed') NOT NULL DEFAULT 'published' AFTER comment"
+    );
+    ensure_column(
+        $pdo,
+        'course_reviews',
+        'deleted_at',
+        'ALTER TABLE course_reviews ADD COLUMN deleted_at DATETIME NULL AFTER moderation_status'
+    );
+
+    ensure_column(
+        $pdo,
+        'user_progress',
+        'archived_at',
+        'ALTER TABLE user_progress ADD COLUMN archived_at DATETIME NULL AFTER updated_at'
+    );
+    ensure_column(
+        $pdo,
+        'course_enrollments',
+        'archived_at',
+        'ALTER TABLE course_enrollments ADD COLUMN archived_at DATETIME NULL AFTER enrolled_at'
+    );
+
+    ensure_column(
+        $pdo,
         'forum_posts',
         'category',
         'ALTER TABLE forum_posts ADD COLUMN category VARCHAR(120) NULL AFTER course_id'
@@ -271,6 +323,11 @@ function ensure_runtime_schema(PDO $pdo): void
     $pdo->exec('UPDATE quiz_questions SET sort_order = id + 1000 WHERE sort_order = 0');
 
     $pdo->exec("UPDATE users SET role = 'student' WHERE role = 'moderator'");
+    $pdo->exec("UPDATE users SET account_status = 'active' WHERE account_status IS NULL OR account_status = ''");
+    $pdo->exec("UPDATE course_reviews SET moderation_status = 'published' WHERE moderation_status IS NULL OR moderation_status = ''");
+    $pdo->exec("UPDATE orders SET deleted_at = NULL WHERE deleted_at = '0000-00-00 00:00:00'");
+    $pdo->exec("UPDATE course_enrollments SET archived_at = NULL WHERE archived_at = '0000-00-00 00:00:00'");
+    $pdo->exec("UPDATE user_progress SET archived_at = NULL WHERE archived_at = '0000-00-00 00:00:00'");
 }
 
 function ensure_column(PDO $pdo, string $table, string $column, string $sql): void
@@ -302,11 +359,18 @@ function ensure_order_status_states(PDO $pdo): void
     $stmt->execute(['orders', 'status']);
     $columnType = (string) ($stmt->fetchColumn() ?: '');
 
-    if ($columnType !== '' && stripos($columnType, "'shipped'") === false) {
+    if (
+        $columnType !== '' &&
+        (
+            stripos($columnType, "'pending'") === false ||
+            stripos($columnType, "'refunded'") === false ||
+            stripos($columnType, "'archived'") === false
+        )
+    ) {
         $pdo->exec(
             "ALTER TABLE orders
-             MODIFY COLUMN status ENUM('paid', 'processing', 'shipped', 'delivered', 'cancelled')
-             NOT NULL DEFAULT 'processing'"
+             MODIFY COLUMN status ENUM('pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded', 'archived')
+             NOT NULL DEFAULT 'pending'"
         );
     }
 }

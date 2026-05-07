@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminConfirmMessage = document.querySelector('[data-admin-confirm-message]');
   const adminConfirmAccept = document.querySelector('[data-admin-confirm-accept]');
   const adminConfirmCancel = document.querySelector('[data-admin-confirm-cancel]');
+  const selectAllBoxes = document.querySelectorAll('[data-select-all]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let pendingConfirmAction = null;
 
@@ -587,6 +588,27 @@ document.addEventListener('DOMContentLoaded', () => {
       toast.classList.remove('is-visible');
     }, 3600);
   });
+
+  if (selectAllBoxes.length > 0) {
+    selectAllBoxes.forEach((masterCheckbox) => {
+      if (!(masterCheckbox instanceof HTMLInputElement)) {
+        return;
+      }
+
+      masterCheckbox.addEventListener('change', () => {
+        const table = masterCheckbox.closest('table');
+        if (!(table instanceof HTMLTableElement)) {
+          return;
+        }
+
+        table.querySelectorAll('tbody input[type="checkbox"][name="selected[]"]').forEach((checkbox) => {
+          if (checkbox instanceof HTMLInputElement) {
+            checkbox.checked = masterCheckbox.checked;
+          }
+        });
+      });
+    });
+  }
 
   document.addEventListener('click', (event) => {
     const target = event.target;
