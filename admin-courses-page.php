@@ -8,6 +8,7 @@ $user = require_admin();
 $noticeMap = [
     'deleted' => 'Course deleted.',
     'created' => 'Course created. You can now refine the overview and resources.',
+    'resources_in_courses' => 'Resources are managed inside each course.',
 ];
 $message = $noticeMap[$_GET['notice'] ?? ''] ?? '';
 

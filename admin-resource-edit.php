@@ -47,7 +47,7 @@ admin_render_start([
     'title' => $pageTitle,
     'page_title' => $kind === 'quiz' ? 'Edit Quiz Item' : 'Edit Resource',
     'page_subtitle' => $course['title'],
-    'active_nav' => 'resources',
+    'active_nav' => 'courses',
     'breadcrumbs' => [
         ['label' => 'Dashboard', 'href' => app_url('admin')],
         ['label' => 'Courses', 'href' => app_url('admin/courses')],

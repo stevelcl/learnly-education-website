@@ -135,6 +135,7 @@ function ensure_runtime_schema(PDO $pdo): void
     );
 
     ensure_order_status_states($pdo);
+    ensure_order_item_book_reference($pdo);
 
     ensure_column(
         $pdo,
@@ -250,6 +251,76 @@ function ensure_order_status_states(PDO $pdo): void
              NOT NULL DEFAULT 'processing'"
         );
     }
+}
+
+function ensure_order_item_book_reference(PDO $pdo): void
+{
+    ensure_column(
+        $pdo,
+        'order_items',
+        'book_title',
+        'ALTER TABLE order_items ADD COLUMN book_title VARCHAR(180) NULL AFTER book_id'
+    );
+
+    $pdo->exec(
+        'UPDATE order_items oi
+         LEFT JOIN books b ON b.id = oi.book_id
+         SET oi.book_title = COALESCE(oi.book_title, b.title)
+         WHERE oi.book_title IS NULL OR oi.book_title = ""'
+    );
+
+    $bookIdColumn = fetch_one(
+        'SELECT is_nullable
+         FROM information_schema.columns
+         WHERE table_schema = DATABASE()
+           AND table_name = ?
+           AND column_name = ?
+         LIMIT 1',
+        ['order_items', 'book_id']
+    );
+
+    if (($bookIdColumn['is_nullable'] ?? 'NO') !== 'YES') {
+        $pdo->exec('ALTER TABLE order_items MODIFY COLUMN book_id INT NULL');
+    }
+
+    $foreignKeys = fetch_all(
+        'SELECT constraint_name
+         FROM information_schema.key_column_usage
+         WHERE table_schema = DATABASE()
+           AND table_name = ?
+           AND column_name = ?
+           AND referenced_table_name = ?',
+        ['order_items', 'book_id', 'books']
+    );
+
+    foreach ($foreignKeys as $foreignKey) {
+        $constraintName = $foreignKey['constraint_name'] ?? '';
+        if ($constraintName === '') {
+            continue;
+        }
+
+        $deleteRule = fetch_one(
+            'SELECT delete_rule
+             FROM information_schema.referential_constraints
+             WHERE constraint_schema = DATABASE()
+               AND table_name = ?
+               AND constraint_name = ?
+             LIMIT 1',
+            ['order_items', $constraintName]
+        );
+
+        if (($deleteRule['delete_rule'] ?? '') === 'SET NULL') {
+            return;
+        }
+
+        $pdo->exec('ALTER TABLE order_items DROP FOREIGN KEY `' . str_replace('`', '``', $constraintName) . '`');
+    }
+
+    $pdo->exec(
+        'ALTER TABLE order_items
+         ADD CONSTRAINT fk_order_items_book
+         FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE SET NULL'
+    );
 }
 
 function fetch_all(string $sql, array $params = []): array

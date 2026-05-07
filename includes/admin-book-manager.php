@@ -119,8 +119,12 @@ function admin_delete_book(int $bookId): array
     }
 
     $coverPath = trim((string) ($book['cover_url'] ?? ''));
-    $stmt = db()->prepare('DELETE FROM books WHERE id = ?');
-    $stmt->execute([$bookId]);
+    try {
+        $stmt = db()->prepare('DELETE FROM books WHERE id = ?');
+        $stmt->execute([$bookId]);
+    } catch (Throwable $e) {
+        return ['ok' => false, 'error' => 'This book could not be deleted yet. Refresh once and try again, so the order-history migration can update the database.'];
+    }
 
     if ($coverPath !== '' && !preg_match('/^https?:\/\//i', $coverPath)) {
         $absolutePath = dirname(__DIR__) . '/' . ltrim($coverPath, '/');

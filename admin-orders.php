@@ -112,9 +112,9 @@ if ($orders) {
     $orderIds = array_map(static fn(array $order): int => (int) $order['id'], $orders);
     $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
     $items = fetch_all(
-        'SELECT oi.order_id, oi.quantity, oi.unit_price, b.title
+        'SELECT oi.order_id, oi.quantity, oi.unit_price, COALESCE(oi.book_title, b.title, "Removed book") AS title
          FROM order_items oi
-         JOIN books b ON b.id = oi.book_id
+         LEFT JOIN books b ON b.id = oi.book_id
          WHERE oi.order_id IN (' . $placeholders . ')
          ORDER BY oi.order_id, oi.id',
         $orderIds

@@ -46,10 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$user['id'], $total, $address, $paymentMethod]);
             $orderId = (int) db()->lastInsertId();
 
-            $itemStmt = db()->prepare('INSERT INTO order_items (order_id, book_id, quantity, unit_price) VALUES (?, ?, ?, ?)');
+            $itemStmt = db()->prepare('INSERT INTO order_items (order_id, book_id, book_title, quantity, unit_price) VALUES (?, ?, ?, ?, ?)');
             $stockStmt = db()->prepare('UPDATE books SET inventory = inventory - ? WHERE id = ?');
             foreach ($books as $book) {
-                $itemStmt->execute([$orderId, $book['id'], $book['quantity'], $book['price']]);
+                $itemStmt->execute([$orderId, $book['id'], $book['title'], $book['quantity'], $book['price']]);
                 $stockStmt->execute([$book['quantity'], $book['id']]);
             }
 

@@ -8,7 +8,6 @@ function admin_sidebar_items(): array
     return [
         'dashboard' => ['label' => 'Dashboard', 'href' => app_url('admin')],
         'courses' => ['label' => 'Courses', 'href' => app_url('admin/courses')],
-        'resources' => ['label' => 'Resources', 'href' => app_url('admin/courses')],
         'students' => ['label' => 'Students', 'href' => app_url('admin/users')],
         'analytics' => ['label' => 'Progress Analytics', 'href' => app_url('admin/analytics')],
         'feedback' => ['label' => 'Feedback', 'href' => app_url('admin/feedback')],

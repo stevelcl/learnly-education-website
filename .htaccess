@@ -6,6 +6,7 @@ RewriteRule ^ - [L]
 
 RewriteRule ^admin/?$ admin.php [L,QSA,NC]
 RewriteRule ^admin/courses/?$ admin-courses-page.php [L,QSA,NC]
+RewriteRule ^admin/resources/?$ admin-resource-hub.php [L,QSA,NC]
 RewriteRule ^admin/course/new/?$ admin-course-manage.php?new=1 [L,QSA,NC]
 RewriteRule ^admin/course/([0-9]+)/(overview|resources|students|feedback)/?$ admin-course-manage.php?id=$1&tab=$2 [L,QSA,NC]
 RewriteRule ^admin/course/([0-9]+)/?$ admin-course-manage.php?id=$1 [L,QSA,NC]

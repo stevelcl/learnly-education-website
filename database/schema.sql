@@ -177,11 +177,12 @@ CREATE TABLE orders (
 CREATE TABLE order_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
-    book_id INT NOT NULL,
+    book_id INT NULL,
+    book_title VARCHAR(180),
     quantity INT NOT NULL,
     unit_price DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (book_id) REFERENCES books(id)
+    FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE SET NULL
 );
 
 INSERT INTO courses (title, subject, description, level) VALUES
