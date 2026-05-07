@@ -64,7 +64,12 @@ function analytics_base_query(array &$params, string $search, string $progressFi
         JOIN courses c ON c.id = ce.course_id
         LEFT JOIN user_progress up ON up.user_id = ce.user_id AND up.course_id = ce.course_id
         LEFT JOIN (
-            SELECT user_id, course_id, COUNT(*) AS completed_items, MAX(completed_at) AS last_completed_at
+            SELECT
+                user_id,
+                course_id,
+                COUNT(*) AS completed_items,
+                SUM(CASE WHEN item_type = "quiz" THEN 1 ELSE 0 END) AS completed_quizzes,
+                MAX(completed_at) AS last_completed_at
             FROM course_item_progress
             GROUP BY user_id, course_id
         ) cp ON cp.user_id = ce.user_id AND cp.course_id = ce.course_id
@@ -316,7 +321,13 @@ $rows = fetch_all(
         up.updated_at,
         up.archived_at,
         COALESCE(cp.completed_items, 0) AS completed_items,
+        COALESCE(cp.completed_quizzes, 0) AS completed_quizzes,
         COALESCE(ct.total_items, 0) AS total_items,
+        (
+            SELECT COUNT(*)
+            FROM quiz_questions qq
+            WHERE qq.course_id = ce.course_id
+        ) AS total_quizzes,
         crv.rating AS submitted_rating,
         crv.comment AS submitted_comment,
         crv.updated_at AS feedback_updated_at,
@@ -466,6 +477,17 @@ admin_render_start([
                 </div>
             </div>
             <table class="admin-compact-table admin-analytics-table">
+                <colgroup>
+                    <col class="col-select">
+                    <col class="col-student">
+                    <col class="col-course">
+                    <col class="col-progress">
+                    <col class="col-steps">
+                    <col class="col-status">
+                    <col class="col-saved">
+                    <col class="col-activity">
+                    <col class="col-actions">
+                </colgroup>
                 <thead>
                     <tr>
                         <th><input type="checkbox" data-select-all></th>
@@ -487,90 +509,102 @@ admin_render_start([
                         $lastActivity = analytics_last_activity($row['updated_at'] ?? null, $row['enrolled_at'] ?? null);
                         $riskState = analytics_risk_state($progressPercent, $lastActivity);
                         $selectionValue = (int) $row['user_id'] . ':' . (int) $row['course_id'];
+                        $detailId = 'analytics-detail-' . (int) $row['user_id'] . '-' . (int) $row['course_id'];
                         ?>
-                        <tr>
-                            <td><input type="checkbox" name="selected[]" value="<?= htmlspecialchars($selectionValue) ?>"></td>
-                            <td>
+                        <tr class="analytics-main-row">
+                            <td data-label="Select"><input type="checkbox" name="selected[]" value="<?= htmlspecialchars($selectionValue) ?>"></td>
+                            <td data-label="Student">
                                 <strong><?= htmlspecialchars($row['name']) ?></strong><br>
                                 <span class="muted"><?= htmlspecialchars($row['email']) ?></span>
                                 <?php if ($riskState !== ''): ?>
                                     <div><span class="status-pill status-<?= $riskState === 'at_risk' ? 'cancelled' : 'pending' ?>"><?= $riskState === 'at_risk' ? 'At Risk' : 'Inactive' ?></span></div>
                                 <?php endif; ?>
                             </td>
-                            <td><?= htmlspecialchars($row['title']) ?><br><span class="muted"><?= htmlspecialchars($row['subject']) ?></span></td>
-                            <td>
+                            <td data-label="Course"><?= htmlspecialchars($row['title']) ?><br><span class="muted"><?= htmlspecialchars($row['subject']) ?></span></td>
+                            <td data-label="Progress">
                                 <div class="admin-progress-cell">
                                     <strong><?= $progressPercent ?>%</strong>
                                     <div class="progress slim"><span class="progress-<?= htmlspecialchars($progressState) ?>" style="width: <?= $progressPercent ?>%"></span></div>
                                 </div>
                             </td>
-                            <td><?= (int) $row['completed_items'] ?> / <?= (int) $row['total_items'] ?></td>
-                            <td><span class="status-pill status-<?= htmlspecialchars($progressState) ?>"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $progressState))) ?></span></td>
-                            <td><?= !empty($row['saved']) ? 'Saved' : 'No' ?></td>
-                            <td><?= htmlspecialchars($lastActivity) ?></td>
-                            <td>
-                                <details class="admin-inline-details">
-                                    <summary class="button ghost small">View learner details</summary>
-                                    <div class="admin-inline-details-card">
-                                        <div class="admin-detail-grid">
-                                            <div>
-                                                <strong>Student information</strong>
-                                                <p><?= htmlspecialchars($row['name']) ?><br><span class="muted"><?= htmlspecialchars($row['email']) ?></span></p>
+                            <td data-label="Completed Steps"><?= (int) $row['completed_items'] ?> / <?= (int) $row['total_items'] ?></td>
+                            <td data-label="Enrollment Status"><span class="status-pill status-<?= htmlspecialchars($progressState) ?>"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $progressState))) ?></span></td>
+                            <td data-label="Saved"><?= !empty($row['saved']) ? 'Saved' : 'No' ?></td>
+                            <td data-label="Last Activity"><?= htmlspecialchars($lastActivity) ?></td>
+                            <td data-label="Actions">
+                                <button type="button" class="button ghost small analytics-detail-toggle" data-analytics-toggle="<?= htmlspecialchars($detailId) ?>" aria-expanded="false">View Details</button>
+                            </td>
+                        </tr>
+                        <tr class="analytics-detail-row" id="<?= htmlspecialchars($detailId) ?>" data-analytics-row hidden>
+                            <td colspan="9">
+                                <div class="analytics-detail-card">
+                                    <div class="analytics-detail-grid">
+                                        <section class="analytics-detail-section">
+                                            <h3>Student Information</h3>
+                                            <p><strong><?= htmlspecialchars($row['name']) ?></strong></p>
+                                            <p class="muted"><?= htmlspecialchars($row['email']) ?></p>
+                                            <p><?= !empty($row['saved']) ? 'Saved this course for later.' : 'Not currently saved.' ?></p>
+                                        </section>
+                                        <section class="analytics-detail-section">
+                                            <h3>Enrollment Details</h3>
+                                            <p><strong>Course:</strong> <?= htmlspecialchars($row['title']) ?></p>
+                                            <p><strong>Level:</strong> <?= htmlspecialchars($row['level']) ?></p>
+                                            <p><strong>Enrolled:</strong> <?= htmlspecialchars((string) $row['enrolled_at']) ?></p>
+                                        </section>
+                                        <section class="analytics-detail-section">
+                                            <h3>Quiz Checks</h3>
+                                            <p><strong>Completed quizzes:</strong> <?= (int) $row['completed_quizzes'] ?> / <?= (int) $row['total_quizzes'] ?></p>
+                                            <p><strong>Completed steps:</strong> <?= (int) $row['completed_items'] ?> / <?= (int) $row['total_items'] ?></p>
+                                        </section>
+                                        <section class="analytics-detail-section">
+                                            <h3>Course Rating</h3>
+                                            <p><strong>Rating:</strong> <?= $row['submitted_rating'] ? (int) $row['submitted_rating'] . '/5' : 'No rating yet' ?></p>
+                                            <p class="muted"><?= htmlspecialchars((string) ($row['submitted_comment'] ?: 'No written feedback submitted.')) ?></p>
+                                        </section>
+                                        <section class="analytics-detail-section">
+                                            <h3>Progress Timeline</h3>
+                                            <p><strong>Last activity:</strong> <?= htmlspecialchars($lastActivity) ?></p>
+                                            <p><strong>Status:</strong> <?= htmlspecialchars(ucwords(str_replace('_', ' ', $progressState))) ?></p>
+                                            <?php if ($riskState !== ''): ?>
+                                                <p><strong>Attention:</strong> <?= $riskState === 'at_risk' ? 'At Risk' : 'Inactive' ?></p>
+                                            <?php endif; ?>
+                                        </section>
+                                        <section class="analytics-detail-section">
+                                            <h3>Admin Actions</h3>
+                                            <div class="admin-table-actions analytics-detail-actions">
+                                                <a class="button ghost small" href="<?= htmlspecialchars(course_url((int) $row['course_id'], true)) ?>">View Course</a>
+                                                <form method="post" class="inline-form">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
+                                                    <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
+                                                    <input type="hidden" name="action" value="reset">
+                                                    <button type="submit" class="button ghost small" data-confirm="Reset this learner's progress for the course?">Reset Progress</button>
+                                                </form>
+                                                <form method="post" class="inline-form">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
+                                                    <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
+                                                    <input type="hidden" name="action" value="mark_complete">
+                                                    <button type="submit" class="button ghost small" data-confirm="Mark this course complete for the learner?">Mark Complete</button>
+                                                </form>
+                                                <form method="post" class="inline-form">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
+                                                    <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
+                                                    <input type="hidden" name="action" value="archive">
+                                                    <button type="submit" class="button ghost small" data-confirm="Archive this progress record?">Archive Record</button>
+                                                </form>
+                                                <form method="post" class="inline-form">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
+                                                    <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
+                                                    <input type="hidden" name="action" value="remove_enrollment">
+                                                    <button type="submit" class="button danger small" data-confirm="Remove this learner from the course? Their saved progress and access will be cleared.">Remove Enrollment</button>
+                                                </form>
                                             </div>
-                                            <div>
-                                                <strong>Course rating</strong>
-                                                <p><?= $row['submitted_rating'] ? (int) $row['submitted_rating'] . '/5' : 'No rating yet' ?></p>
-                                            </div>
-                                            <div>
-                                                <strong>Enrolled date</strong>
-                                                <p><?= htmlspecialchars((string) $row['enrolled_at']) ?></p>
-                                            </div>
-                                            <div>
-                                                <strong>Last activity</strong>
-                                                <p><?= htmlspecialchars($lastActivity) ?></p>
-                                            </div>
-                                            <div>
-                                                <strong>Feedback submitted</strong>
-                                                <p><?= htmlspecialchars((string) ($row['submitted_comment'] ?: 'No written feedback yet.')) ?></p>
-                                            </div>
-                                            <div>
-                                                <strong>Saved status</strong>
-                                                <p><?= !empty($row['saved']) ? 'Saved by learner' : 'Not saved' ?></p>
-                                            </div>
-                                        </div>
-                                        <div class="admin-table-actions">
-                                            <a class="button ghost small" href="<?= htmlspecialchars(course_url((int) $row['course_id'], true)) ?>">View Course</a>
-                                            <form method="post" class="inline-form">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
-                                                <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
-                                                <input type="hidden" name="action" value="reset">
-                                                <button type="submit" class="button ghost small" data-confirm="Reset this learner's progress for the course?">Reset Progress</button>
-                                            </form>
-                                            <form method="post" class="inline-form">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
-                                                <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
-                                                <input type="hidden" name="action" value="mark_complete">
-                                                <button type="submit" class="button ghost small" data-confirm="Mark this course complete for the learner?">Mark Complete</button>
-                                            </form>
-                                            <form method="post" class="inline-form">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
-                                                <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
-                                                <input type="hidden" name="action" value="archive">
-                                                <button type="submit" class="button ghost small" data-confirm="Archive this progress record?">Archive Record</button>
-                                            </form>
-                                            <form method="post" class="inline-form">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="target_user_id" value="<?= (int) $row['user_id'] ?>">
-                                                <input type="hidden" name="target_course_id" value="<?= (int) $row['course_id'] ?>">
-                                                <input type="hidden" name="action" value="remove_enrollment">
-                                                <button type="submit" class="button danger small" data-confirm="Remove this learner from the course? Their saved progress and access will be cleared.">Remove Enrollment</button>
-                                            </form>
-                                        </div>
+                                        </section>
                                     </div>
-                                </details>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

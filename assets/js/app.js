@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminConfirmAccept = document.querySelector('[data-admin-confirm-accept]');
   const adminConfirmCancel = document.querySelector('[data-admin-confirm-cancel]');
   const selectAllBoxes = document.querySelectorAll('[data-select-all]');
+  const analyticsToggles = document.querySelectorAll('[data-analytics-toggle]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let pendingConfirmAction = null;
 
@@ -606,6 +607,44 @@ document.addEventListener('DOMContentLoaded', () => {
             checkbox.checked = masterCheckbox.checked;
           }
         });
+      });
+    });
+  }
+
+  if (analyticsToggles.length > 0) {
+    analyticsToggles.forEach((toggle) => {
+      if (!(toggle instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      toggle.addEventListener('click', () => {
+        const targetId = toggle.getAttribute('data-analytics-toggle') || '';
+        if (targetId === '') {
+          return;
+        }
+
+        const detailsRow = document.getElementById(targetId);
+        if (!(detailsRow instanceof HTMLTableRowElement)) {
+          return;
+        }
+
+        const isHidden = detailsRow.hasAttribute('hidden');
+
+        analyticsToggles.forEach((otherToggle) => {
+          if (!(otherToggle instanceof HTMLButtonElement)) {
+            return;
+          }
+
+          const otherId = otherToggle.getAttribute('data-analytics-toggle') || '';
+          const otherRow = otherId !== '' ? document.getElementById(otherId) : null;
+          if (otherRow instanceof HTMLTableRowElement) {
+            otherRow.hidden = true;
+          }
+          otherToggle.setAttribute('aria-expanded', 'false');
+        });
+
+        detailsRow.hidden = !isHidden;
+        toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
       });
     });
   }

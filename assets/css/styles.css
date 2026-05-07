@@ -2346,11 +2346,12 @@ body.admin-app {
     position: sticky;
     top: 0;
     height: 100vh;
-    padding: 0.95rem;
+    padding: 0.85rem 0.8rem;
     background: linear-gradient(180deg, rgba(12, 33, 68, 0.98), rgba(17, 43, 85, 0.98));
     color: rgba(255, 255, 255, 0.82);
     display: grid;
-    gap: 0.85rem;
+    gap: 0.45rem;
+    align-content: start;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     z-index: 20;
 }
@@ -2360,6 +2361,7 @@ body.admin-app {
     justify-content: space-between;
     gap: 0.5rem;
     align-items: start;
+    margin-bottom: 0.2rem;
 }
 
 .admin-app-brand {
@@ -2385,30 +2387,33 @@ body.admin-app {
 
 .admin-app-brand span {
     color: rgba(255, 255, 255, 0.65);
-    font-size: 0.92rem;
+    font-size: 0.88rem;
 }
 
 .admin-app-nav {
     display: grid;
-    gap: 0.28rem;
+    gap: 0.16rem;
 }
 
 .admin-app-nav a {
     display: flex;
     align-items: center;
     min-height: 42px;
-    padding: 0.72rem 0.9rem;
+    padding: 0.68rem 0.9rem;
     border-radius: 14px;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 700;
-    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+    border: 1px solid transparent;
+    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .admin-app-nav a:hover,
 .admin-app-nav a.active {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.1);
     color: #fff;
     transform: translateX(2px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .admin-app-main {
@@ -2511,7 +2516,8 @@ body.admin-app {
 
 .admin-content {
     padding: 1rem 1.25rem 1.5rem;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: grid;
     gap: 1rem;
 }
@@ -2664,7 +2670,8 @@ body.admin-app {
 }
 
 .admin-data-table {
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: clip;
     border-radius: 20px;
     border: 1px solid rgba(123, 149, 196, 0.12);
     background: rgba(255, 255, 255, 0.82);
@@ -2672,9 +2679,11 @@ body.admin-app {
 }
 
 .admin-data-table table {
+    width: 100%;
     box-shadow: none;
     background: transparent;
     border-radius: 0;
+    table-layout: fixed;
 }
 
 .admin-data-table th,
@@ -2699,33 +2708,6 @@ body.admin-app {
     align-items: center;
     gap: 0.45rem;
     flex-wrap: wrap;
-}
-
-.admin-inline-details {
-    position: relative;
-}
-
-.admin-inline-details summary {
-    list-style: none;
-}
-
-.admin-inline-details summary::-webkit-details-marker {
-    display: none;
-}
-
-.admin-inline-details-card {
-    position: absolute;
-    right: 0;
-    z-index: 5;
-    width: min(560px, 78vw);
-    margin-top: 0.55rem;
-    padding: 1rem;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.99);
-    border: 1px solid rgba(123, 149, 196, 0.14);
-    box-shadow: 0 22px 44px rgba(17, 46, 102, 0.16);
-    display: grid;
-    gap: 0.9rem;
 }
 
 .admin-detail-grid {
@@ -2783,6 +2765,113 @@ body.admin-app {
     gap: 0.75rem;
     align-items: center;
     padding: 0.9rem 0.9rem 0;
+}
+
+.admin-analytics-table {
+    min-width: 100%;
+}
+
+.admin-analytics-table .col-select {
+    width: 44px;
+}
+
+.admin-analytics-table .col-student {
+    width: 16%;
+}
+
+.admin-analytics-table .col-course {
+    width: 20%;
+}
+
+.admin-analytics-table .col-progress {
+    width: 12%;
+}
+
+.admin-analytics-table .col-steps {
+    width: 11%;
+}
+
+.admin-analytics-table .col-status {
+    width: 11%;
+}
+
+.admin-analytics-table .col-saved {
+    width: 8%;
+}
+
+.admin-analytics-table .col-activity {
+    width: 12%;
+}
+
+.admin-analytics-table .col-actions {
+    width: 140px;
+}
+
+.admin-analytics-table td,
+.admin-analytics-table th {
+    vertical-align: top;
+}
+
+.analytics-main-row td:nth-child(3) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.analytics-detail-toggle {
+    min-width: 118px;
+    white-space: nowrap;
+}
+
+.analytics-detail-row[hidden] {
+    display: none;
+}
+
+.analytics-detail-row td {
+    padding: 0 0.85rem 0.95rem;
+    background: transparent;
+    border-top: 0;
+}
+
+.analytics-detail-card {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(244, 247, 255, 0.92), rgba(255, 255, 255, 0.98));
+    border: 1px solid rgba(123, 149, 196, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.analytics-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.analytics-detail-section {
+    display: grid;
+    gap: 0.4rem;
+    align-content: start;
+    min-width: 0;
+    padding: 0.95rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(123, 149, 196, 0.12);
+}
+
+.analytics-detail-section h3 {
+    margin: 0;
+    font-size: 0.98rem;
+}
+
+.analytics-detail-section p {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.analytics-detail-actions {
+    margin-top: 0.2rem;
 }
 
 .admin-empty-state {
@@ -3146,13 +3235,42 @@ body.admin-app {
     }
 
     .admin-detail-grid,
-    .admin-order-item-row {
+    .admin-order-item-row,
+    .analytics-detail-grid {
         grid-template-columns: 1fr;
     }
 
-    .admin-inline-details-card {
-        position: static;
+    .admin-analytics-table,
+    .admin-analytics-table tbody,
+    .admin-analytics-table tr,
+    .admin-analytics-table td {
+        display: block;
         width: 100%;
+    }
+
+    .analytics-main-row {
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid rgba(123, 149, 196, 0.12);
+    }
+
+    .analytics-main-row td,
+    .analytics-detail-row td {
+        padding-inline: 0.85rem;
+    }
+
+    .analytics-main-row td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 0.2rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .analytics-detail-row td {
+        padding-top: 0;
     }
 }
 
