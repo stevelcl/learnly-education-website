@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminConfirmMessage = document.querySelector('[data-admin-confirm-message]');
   const adminConfirmAccept = document.querySelector('[data-admin-confirm-accept]');
   const adminConfirmCancel = document.querySelector('[data-admin-confirm-cancel]');
+  const orderModal = document.querySelector('[data-order-modal]');
   const selectAllBoxes = document.querySelectorAll('[data-select-all]');
   const analyticsModal = document.querySelector('[data-analytics-modal]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -643,6 +644,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const closeOrderModal = () => {
+    if (!(orderModal instanceof HTMLElement)) {
+      return;
+    }
+
+    orderModal.hidden = true;
+  };
+
+  const setOrderText = (selector, value) => {
+    if (!(orderModal instanceof HTMLElement)) {
+      return;
+    }
+
+    const element = orderModal.querySelector(selector);
+    if (element instanceof HTMLElement) {
+      element.textContent = value;
+    }
+  };
+
+  if (orderModal instanceof HTMLElement) {
+    orderModal.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (target === orderModal || target.closest('[data-order-close]')) {
+        closeOrderModal();
+      }
+    });
+  }
+
   document.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
@@ -734,6 +767,56 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const orderOpenButton = target.closest('[data-order-open]');
+    if (orderOpenButton instanceof HTMLElement && orderModal instanceof HTMLElement) {
+      event.preventDefault();
+      const payloadRaw = orderOpenButton.getAttribute('data-order-open') || '';
+      if (payloadRaw === '') {
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(payloadRaw);
+        setOrderText('[data-order-modal-title]', `Order #${payload.id || ''}`.trim());
+        setOrderText('[data-order-modal-meta]', `${payload.customer || 'Customer'} · ${payload.total || ''}`.trim());
+        setOrderText('[data-order-customer]', payload.customer || 'Customer');
+        setOrderText('[data-order-email]', payload.email || '');
+        setOrderText('[data-order-status]', payload.status || 'Pending');
+        setOrderText('[data-order-total]', payload.total || 'RM 0.00');
+        setOrderText('[data-order-date]', payload.created_at || '--');
+        setOrderText('[data-order-address]', payload.delivery_address || 'Not provided');
+        setOrderText('[data-order-payment]', payload.payment_method || 'Not provided');
+
+        const itemsBody = orderModal.querySelector('[data-order-items-body]');
+        if (itemsBody instanceof HTMLElement) {
+          const rows = Array.isArray(payload.items) ? payload.items : [];
+          if (rows.length === 0) {
+            itemsBody.innerHTML = '<tr><td colspan="3" class="muted">No items found for this order.</td></tr>';
+          } else {
+            itemsBody.innerHTML = rows
+              .map((item) => {
+                const title = String(item.title || 'Removed book')
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+                const quantity = String(item.quantity || 0);
+                const price = String(item.price || 'RM 0.00')
+                  .replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+                return `<tr><td>${title}</td><td>${quantity}</td><td>${price}</td></tr>`;
+              })
+              .join('');
+          }
+        }
+
+        orderModal.hidden = false;
+      } catch (error) {
+        console.error('Unable to open order details.', error);
+      }
+      return;
+    }
+
     const toggle = target.closest('[data-password-toggle]');
     if (!(toggle instanceof HTMLElement)) {
       return;
@@ -812,6 +895,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (analyticsModal instanceof HTMLElement && !analyticsModal.hidden) {
       analyticsModal.hidden = true;
+    }
+
+    if (orderModal instanceof HTMLElement && !orderModal.hidden) {
+      orderModal.hidden = true;
     }
   });
 });

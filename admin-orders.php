@@ -198,6 +198,14 @@ admin_render_start([
         <div class="admin-empty-state"><strong>No orders found</strong><span>Try a broader filter or wait for new checkout activity.</span></div>
     <?php else: ?>
         <table class="admin-compact-table admin-orders-table">
+            <colgroup>
+                <col class="col-order">
+                <col class="col-customer">
+                <col class="col-total">
+                <col class="col-status">
+                <col class="col-date">
+                <col class="col-actions">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Order</th>
@@ -210,74 +218,68 @@ admin_render_start([
             </thead>
             <tbody>
                 <?php foreach ($orders as $order): ?>
-                    <?php $items = $orderItemsByOrder[(int) $order['id']] ?? []; ?>
+                    <?php
+                    $items = $orderItemsByOrder[(int) $order['id']] ?? [];
+                    $orderPayload = [
+                        'id' => (int) $order['id'],
+                        'customer' => (string) $order['name'],
+                        'email' => (string) $order['email'],
+                        'status' => ucfirst((string) $order['status']),
+                        'total' => 'RM ' . number_format((float) $order['total'], 2),
+                        'created_at' => (string) $order['created_at'],
+                        'delivery_address' => (string) ($order['delivery_address'] ?: 'Not provided'),
+                        'payment_method' => (string) ($order['payment_method'] ?: 'Not provided'),
+                        'items' => array_map(static fn(array $item): array => [
+                            'title' => (string) $item['title'],
+                            'quantity' => (int) $item['quantity'],
+                            'price' => 'RM ' . number_format((float) $item['unit_price'], 2),
+                        ], $items),
+                    ];
+                    ?>
                     <tr>
-                        <td><strong>#<?= (int) $order['id'] ?></strong></td>
-                        <td><?= htmlspecialchars($order['name']) ?><br><span class="muted"><?= htmlspecialchars($order['email']) ?></span></td>
-                        <td>RM <?= number_format((float) $order['total'], 2) ?></td>
-                        <td><span class="status-pill status-<?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars(ucfirst($order['status'])) ?></span></td>
-                        <td><?= htmlspecialchars((string) $order['created_at']) ?></td>
-                        <td>
-                            <details class="admin-inline-details">
-                                <summary class="button ghost small">View Details</summary>
-                                <div class="admin-inline-details-card">
-                                    <div class="admin-detail-grid">
-                                        <div>
-                                            <strong>Delivery Address</strong>
-                                            <p><?= nl2br(htmlspecialchars((string) ($order['delivery_address'] ?: 'Not provided'))) ?></p>
-                                        </div>
-                                        <div>
-                                            <strong>Payment Method</strong>
-                                            <p><?= htmlspecialchars((string) ($order['payment_method'] ?: 'Not provided')) ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="admin-order-items">
-                                        <strong>Order Items</strong>
-                                        <?php if (!$items): ?>
-                                            <p class="muted">No items found for this order.</p>
-                                        <?php else: ?>
-                                            <?php foreach ($items as $item): ?>
-                                                <div class="admin-order-item-row">
-                                                    <span><?= htmlspecialchars($item['title']) ?></span>
-                                                    <span class="muted">Qty <?= (int) $item['quantity'] ?></span>
-                                                    <span>RM <?= number_format((float) $item['unit_price'], 2) ?></span>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="admin-table-actions">
-                                        <form method="post" class="inline-form compact-inline-form">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                                            <input type="hidden" name="action" value="save_status">
-                                            <select name="status">
-                                                <?php foreach ($allowedStatuses as $statusOption): ?>
-                                                    <option value="<?= htmlspecialchars($statusOption) ?>" <?= $order['status'] === $statusOption ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($statusOption)) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <button type="submit" class="button ghost small">Save Status</button>
-                                        </form>
-                                        <form method="post" class="inline-form">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                                            <input type="hidden" name="action" value="cancel">
-                                            <button type="submit" class="button ghost small" data-confirm="Cancel this order?">Cancel Order</button>
-                                        </form>
-                                        <form method="post" class="inline-form">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                                            <input type="hidden" name="action" value="archive">
-                                            <button type="submit" class="button ghost small" data-confirm="Archive this order from the active queue?">Archive</button>
-                                        </form>
-                                        <form method="post" class="inline-form">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                                            <input type="hidden" name="action" value="delete">
-                                            <button type="submit" class="button danger small" data-confirm="Hide this order from active management views? Order history will remain intact.">Delete</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </details>
+                        <td data-label="Order"><strong>#<?= (int) $order['id'] ?></strong></td>
+                        <td data-label="Customer">
+                            <div class="admin-cell-stack">
+                                <strong><?= htmlspecialchars($order['name']) ?></strong>
+                                <span class="muted"><?= htmlspecialchars($order['email']) ?></span>
+                            </div>
+                        </td>
+                        <td data-label="Total">RM <?= number_format((float) $order['total'], 2) ?></td>
+                        <td data-label="Status"><span class="status-pill status-<?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars(ucfirst($order['status'])) ?></span></td>
+                        <td data-label="Date"><?= htmlspecialchars((string) $order['created_at']) ?></td>
+                        <td data-label="Actions">
+                            <div class="admin-table-actions admin-order-actions">
+                                <button type="button" class="button ghost small" data-order-open='<?= htmlspecialchars(json_encode($orderPayload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES) ?>'>View Details</button>
+                                <form method="post" class="inline-form compact-inline-form admin-order-status-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                    <input type="hidden" name="action" value="save_status">
+                                    <select name="status">
+                                        <?php foreach ($allowedStatuses as $statusOption): ?>
+                                            <option value="<?= htmlspecialchars($statusOption) ?>" <?= $order['status'] === $statusOption ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($statusOption)) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <button type="submit" class="button ghost small">Save Status</button>
+                                </form>
+                                <form method="post" class="inline-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                    <input type="hidden" name="action" value="cancel">
+                                    <button type="submit" class="button ghost small" data-confirm="Cancel this order?">Cancel</button>
+                                </form>
+                                <form method="post" class="inline-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                    <input type="hidden" name="action" value="archive">
+                                    <button type="submit" class="button ghost small" data-confirm="Archive this order from the active queue?">Archive</button>
+                                </form>
+                                <form method="post" class="inline-form">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="button danger small" data-confirm="Hide this order from active management views? Order history will remain intact.">Delete</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -285,6 +287,57 @@ admin_render_start([
         </table>
     <?php endif; ?>
 </section>
+
+<div class="admin-order-modal" data-order-modal hidden>
+    <div class="admin-order-dialog">
+        <div class="admin-order-dialog-head">
+            <div>
+                <p class="eyebrow">Order Details</p>
+                <h2 data-order-modal-title>Order</h2>
+                <p class="muted" data-order-modal-meta>Customer details</p>
+            </div>
+            <button type="button" class="button ghost small" data-order-close>Close</button>
+        </div>
+        <div class="admin-detail-grid admin-order-detail-grid">
+            <section class="analytics-detail-section">
+                <h3>Customer</h3>
+                <p><strong data-order-customer>Customer</strong></p>
+                <p class="muted" data-order-email>Email</p>
+            </section>
+            <section class="analytics-detail-section">
+                <h3>Order Summary</h3>
+                <p><strong>Status:</strong> <span data-order-status>Status</span></p>
+                <p><strong>Total:</strong> <span data-order-total>Total</span></p>
+                <p><strong>Date:</strong> <span data-order-date>Date</span></p>
+            </section>
+            <section class="analytics-detail-section admin-form-span-2">
+                <h3>Delivery Address</h3>
+                <p data-order-address>Address</p>
+            </section>
+            <section class="analytics-detail-section admin-form-span-2">
+                <h3>Payment Method</h3>
+                <p data-order-payment>Payment method</p>
+            </section>
+            <section class="analytics-detail-section admin-form-span-2">
+                <h3>Order Items</h3>
+                <div class="admin-order-items-table-shell">
+                    <table class="admin-order-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody data-order-items-body>
+                            <tr><td colspan="3" class="muted">No items found for this order.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
 
 <?php if ($totalPages > 1): ?>
     <div class="pagination-bar">

@@ -298,7 +298,7 @@ $sortSql = match ($sort) {
 };
 
 $countRow = fetch_one(
-    'SELECT COUNT(*) AS total
+    'SELECT COUNT(DISTINCT CONCAT(ce.user_id, ":", ce.course_id)) AS total
      ' . $baseSql,
     $params
 );
@@ -308,7 +308,7 @@ $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
 $rows = fetch_all(
-    'SELECT
+    'SELECT DISTINCT
         ce.user_id,
         ce.course_id,
         u.name,
@@ -468,7 +468,7 @@ admin_render_start([
 
 <section class="panel admin-data-table analytics-table-shell">
     <?php if (!$rows): ?>
-        <div class="admin-empty-state"><strong>No learner progress data available yet.</strong><span>Enrollments and lesson activity will appear here once students start learning.</span></div>
+        <div class="admin-empty-state"><strong>No progress records found.</strong><span>Try adjusting the filters or wait for new learner activity.</span></div>
     <?php else: ?>
         <form method="post">
             <?= csrf_field() ?>

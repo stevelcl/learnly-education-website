@@ -88,8 +88,9 @@ if ($filter === 'flagged') {
     $where[] = 'cr.moderation_status = "flagged"';
 }
 if ($search !== '') {
-    $where[] = '(u.name LIKE ? OR u.email LIKE ? OR c.title LIKE ? OR cr.comment LIKE ?)';
+    $where[] = '(u.name LIKE ? OR u.email LIKE ? OR c.title LIKE ? OR c.subject LIKE ? OR cr.comment LIKE ?)';
     $like = '%' . $search . '%';
+    $params[] = $like;
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
@@ -140,7 +141,7 @@ admin_render_start([
 <section class="panel">
     <form class="admin-filter-bar" method="get">
         <label>Search
-            <input type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search student, course, or comment">
+            <input type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search student, course, subject, or comment">
         </label>
         <label>Filter
             <select name="filter">
@@ -162,7 +163,16 @@ admin_render_start([
     <?php if (!$feedbackRows): ?>
         <div class="admin-empty-state"><strong>No feedback found</strong><span>Reviews will appear here after learners complete their courses.</span></div>
     <?php else: ?>
-        <table class="admin-compact-table">
+        <table class="admin-compact-table admin-feedback-table">
+            <colgroup>
+                <col class="col-student">
+                <col class="col-course">
+                <col class="col-rating">
+                <col class="col-comment">
+                <col class="col-status">
+                <col class="col-date">
+                <col class="col-actions">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Student</th>
@@ -177,14 +187,29 @@ admin_render_start([
             <tbody>
                 <?php foreach ($feedbackRows as $feedback): ?>
                     <tr>
-                        <td><strong><?= htmlspecialchars($feedback['name']) ?></strong><br><span class="muted"><?= htmlspecialchars($feedback['email']) ?></span></td>
-                        <td><?= htmlspecialchars($feedback['title']) ?><br><span class="muted"><?= htmlspecialchars($feedback['subject']) ?></span></td>
-                        <td><?= str_repeat('★', (int) $feedback['rating']) ?><br><span class="muted"><?= (int) $feedback['rating'] ?>/5</span></td>
-                        <td><?= htmlspecialchars(mb_strimwidth((string) ($feedback['comment'] ?: 'Rated without a written comment.'), 0, 92, '...')) ?></td>
-                        <td><span class="status-pill status-<?= htmlspecialchars($feedback['moderation_status']) ?>"><?= htmlspecialchars(ucfirst($feedback['moderation_status'])) ?></span></td>
-                        <td><?= htmlspecialchars((string) $feedback['updated_at']) ?></td>
-                        <td>
-                            <div class="admin-table-actions">
+                        <td data-label="Student">
+                            <div class="admin-cell-stack">
+                                <strong><?= htmlspecialchars($feedback['name']) ?></strong>
+                                <span class="muted"><?= htmlspecialchars($feedback['email']) ?></span>
+                            </div>
+                        </td>
+                        <td data-label="Course">
+                            <div class="admin-cell-stack">
+                                <strong><?= htmlspecialchars($feedback['title']) ?></strong>
+                                <span class="muted"><?= htmlspecialchars($feedback['subject']) ?></span>
+                            </div>
+                        </td>
+                        <td data-label="Rating">
+                            <div class="admin-cell-stack admin-rating-stack">
+                                <strong><?= str_repeat('★', (int) $feedback['rating']) ?></strong>
+                                <span class="muted"><?= (int) $feedback['rating'] ?>/5</span>
+                            </div>
+                        </td>
+                        <td data-label="Comment Preview"><div class="admin-comment-preview"><?= htmlspecialchars(mb_strimwidth((string) ($feedback['comment'] ?: 'Rated without a written comment.'), 0, 120, '...')) ?></div></td>
+                        <td data-label="Status"><span class="status-pill status-<?= htmlspecialchars($feedback['moderation_status']) ?>"><?= htmlspecialchars(ucfirst($feedback['moderation_status'])) ?></span></td>
+                        <td data-label="Date"><?= htmlspecialchars((string) $feedback['updated_at']) ?></td>
+                        <td data-label="Actions">
+                            <div class="admin-table-actions admin-feedback-actions">
                                 <a class="button ghost small" href="<?= htmlspecialchars(course_url((int) $feedback['course_id'], true)) ?>">View Course</a>
                                 <form method="post" class="inline-form">
                                     <?= csrf_field() ?>
