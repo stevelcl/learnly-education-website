@@ -341,6 +341,20 @@ function ensure_order_item_book_reference(PDO $pdo): void
         $pdo->exec('ALTER TABLE order_items MODIFY COLUMN book_id INT NULL');
     }
 
+    $existingTargetConstraint = fetch_one(
+        'SELECT delete_rule
+         FROM information_schema.referential_constraints
+         WHERE constraint_schema = DATABASE()
+           AND table_name = ?
+           AND constraint_name = ?
+         LIMIT 1',
+        ['order_items', 'fk_order_items_book']
+    );
+
+    if (($existingTargetConstraint['delete_rule'] ?? '') === 'SET NULL') {
+        return;
+    }
+
     $foreignKeys = fetch_all(
         'SELECT constraint_name
          FROM information_schema.key_column_usage
