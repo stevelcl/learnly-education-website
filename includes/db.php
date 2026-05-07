@@ -1,15 +1,16 @@
 <?php
 require_once __DIR__ . '/config-helper.php';
 
+const LEARNLY_RUNTIME_SCHEMA_VERSION = 2;
+
 function db(): PDO
 {
     static $pdo = null;
-    static $migrated = false;
 
     if ($pdo instanceof PDO) {
-        if (!$migrated) {
+        if (should_run_runtime_schema()) {
             ensure_runtime_schema($pdo);
-            $migrated = true;
+            mark_runtime_schema_checked();
         }
         return $pdo;
     }
@@ -33,9 +34,55 @@ function db(): PDO
     }
 
     $pdo = new PDO($dsn, $config['DB_USER'], $config['DB_PASS'], $options);
-    ensure_runtime_schema($pdo);
-    $migrated = true;
+    if (should_run_runtime_schema()) {
+        ensure_runtime_schema($pdo);
+        mark_runtime_schema_checked();
+    }
     return $pdo;
+}
+
+function should_run_runtime_schema(): bool
+{
+    static $shouldRun = null;
+
+    if ($shouldRun !== null) {
+        return $shouldRun;
+    }
+
+    if (app_is_local_environment()) {
+        $shouldRun = true;
+        return $shouldRun;
+    }
+
+    $cacheFile = runtime_schema_cache_file();
+    if (is_file($cacheFile)) {
+        $cachedVersion = trim((string) @file_get_contents($cacheFile));
+        if ($cachedVersion === (string) LEARNLY_RUNTIME_SCHEMA_VERSION) {
+            $shouldRun = false;
+            return $shouldRun;
+        }
+    }
+
+    $shouldRun = true;
+    return $shouldRun;
+}
+
+function mark_runtime_schema_checked(): void
+{
+    static $marked = false;
+
+    if ($marked) {
+        return;
+    }
+
+    $cacheFile = runtime_schema_cache_file();
+    @file_put_contents($cacheFile, (string) LEARNLY_RUNTIME_SCHEMA_VERSION, LOCK_EX);
+    $marked = true;
+}
+
+function runtime_schema_cache_file(): string
+{
+    return rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'learnly-runtime-schema-v' . LEARNLY_RUNTIME_SCHEMA_VERSION . '.flag';
 }
 
 function ensure_runtime_schema(PDO $pdo): void
