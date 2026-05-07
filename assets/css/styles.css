@@ -2346,11 +2346,11 @@ body.admin-app {
     position: sticky;
     top: 0;
     height: 100vh;
-    padding: 0.85rem 0.8rem;
+    padding: 0.75rem 0.8rem;
     background: linear-gradient(180deg, rgba(12, 33, 68, 0.98), rgba(17, 43, 85, 0.98));
     color: rgba(255, 255, 255, 0.82);
     display: grid;
-    gap: 0.45rem;
+    gap: 0.32rem;
     align-content: start;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     z-index: 20;
@@ -2361,7 +2361,7 @@ body.admin-app {
     justify-content: space-between;
     gap: 0.5rem;
     align-items: start;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.05rem;
 }
 
 .admin-app-brand {
@@ -2392,14 +2392,14 @@ body.admin-app {
 
 .admin-app-nav {
     display: grid;
-    gap: 0.16rem;
+    gap: 0.1rem;
 }
 
 .admin-app-nav a {
     display: flex;
     align-items: center;
     min-height: 42px;
-    padding: 0.68rem 0.9rem;
+    padding: 0.64rem 0.88rem;
     border-radius: 14px;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 700;
@@ -2672,6 +2672,7 @@ body.admin-app {
 .admin-data-table {
     overflow-x: auto;
     overflow-y: clip;
+    max-width: 100%;
     border-radius: 20px;
     border: 1px solid rgba(123, 149, 196, 0.12);
     background: rgba(255, 255, 255, 0.82);
@@ -2764,11 +2765,12 @@ body.admin-app {
     justify-content: space-between;
     gap: 0.75rem;
     align-items: center;
-    padding: 0.9rem 0.9rem 0;
+    padding: 0.7rem 0.8rem 0;
 }
 
 .admin-analytics-table {
-    min-width: 100%;
+    width: 100%;
+    min-width: 0;
 }
 
 .admin-analytics-table .col-select {
@@ -2776,46 +2778,62 @@ body.admin-app {
 }
 
 .admin-analytics-table .col-student {
-    width: 16%;
+    width: 18%;
 }
 
 .admin-analytics-table .col-course {
-    width: 20%;
+    width: 22%;
 }
 
 .admin-analytics-table .col-progress {
-    width: 12%;
+    width: 13%;
 }
 
 .admin-analytics-table .col-steps {
-    width: 11%;
+    width: 10%;
 }
 
 .admin-analytics-table .col-status {
-    width: 11%;
+    width: 10%;
 }
 
 .admin-analytics-table .col-saved {
-    width: 8%;
+    width: 7%;
 }
 
 .admin-analytics-table .col-activity {
-    width: 12%;
+    width: 11%;
 }
 
 .admin-analytics-table .col-actions {
-    width: 140px;
+    width: 132px;
 }
 
 .admin-analytics-table td,
 .admin-analytics-table th {
     vertical-align: top;
+    overflow: hidden;
 }
 
-.analytics-main-row td:nth-child(3) {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.analytics-course-cell {
+    display: grid;
+    gap: 0.24rem;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.analytics-course-cell strong,
+.analytics-course-cell .muted {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.analytics-course-cell strong {
+    font-size: 0.96rem;
+}
+
+.analytics-course-cell .muted {
+    font-size: 0.84rem;
 }
 
 .analytics-detail-toggle {
@@ -2823,14 +2841,60 @@ body.admin-app {
     white-space: nowrap;
 }
 
-.analytics-detail-row[hidden] {
-    display: none;
+.analytics-filter-bar {
+    gap: 0.65rem;
 }
 
-.analytics-detail-row td {
-    padding: 0 0.85rem 0.95rem;
-    background: transparent;
-    border-top: 0;
+.analytics-filter-bar label {
+    min-width: 150px;
+    flex: 1 1 165px;
+}
+
+.analytics-table-shell {
+    overflow: clip;
+}
+
+.analytics-detail-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 28;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(12, 23, 43, 0.34);
+    backdrop-filter: blur(8px);
+}
+
+.analytics-detail-modal[hidden] {
+    display: none !important;
+}
+
+.analytics-detail-dialog {
+    width: min(1080px, 100%);
+    max-height: min(88vh, 920px);
+    overflow: auto;
+    display: grid;
+    gap: 1rem;
+    padding: 1.15rem;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(123, 149, 196, 0.14);
+    box-shadow: 0 26px 64px rgba(17, 46, 102, 0.22);
+}
+
+.analytics-detail-dialog-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+}
+
+.analytics-detail-dialog-head h2 {
+    margin: 0.18rem 0 0.22rem;
+}
+
+.analytics-detail-dialog .eyebrow {
+    margin: 0;
 }
 
 .analytics-detail-card {
@@ -2872,6 +2936,10 @@ body.admin-app {
 
 .analytics-detail-actions {
     margin-top: 0.2rem;
+}
+
+.analytics-detail-actions-card {
+    align-content: space-between;
 }
 
 .admin-empty-state {
@@ -3240,6 +3308,31 @@ body.admin-app {
         grid-template-columns: 1fr;
     }
 
+    .analytics-detail-dialog {
+        width: min(100%, 680px);
+        padding: 1rem;
+    }
+
+    .analytics-detail-dialog-head {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-analytics-table {
+        table-layout: auto;
+    }
+
+    .admin-analytics-table .col-select,
+    .admin-analytics-table .col-student,
+    .admin-analytics-table .col-course,
+    .admin-analytics-table .col-progress,
+    .admin-analytics-table .col-steps,
+    .admin-analytics-table .col-status,
+    .admin-analytics-table .col-saved,
+    .admin-analytics-table .col-activity,
+    .admin-analytics-table .col-actions {
+        width: auto;
+    }
+
     .admin-analytics-table,
     .admin-analytics-table tbody,
     .admin-analytics-table tr,
@@ -3253,8 +3346,7 @@ body.admin-app {
         border-bottom: 1px solid rgba(123, 149, 196, 0.12);
     }
 
-    .analytics-main-row td,
-    .analytics-detail-row td {
+    .analytics-main-row td {
         padding-inline: 0.85rem;
     }
 
@@ -3267,10 +3359,6 @@ body.admin-app {
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.03em;
-    }
-
-    .analytics-detail-row td {
-        padding-top: 0;
     }
 }
 

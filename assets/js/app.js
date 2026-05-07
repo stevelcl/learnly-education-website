@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminConfirmAccept = document.querySelector('[data-admin-confirm-accept]');
   const adminConfirmCancel = document.querySelector('[data-admin-confirm-cancel]');
   const selectAllBoxes = document.querySelectorAll('[data-select-all]');
-  const analyticsToggles = document.querySelectorAll('[data-analytics-toggle]');
+  const analyticsModal = document.querySelector('[data-analytics-modal]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let pendingConfirmAction = null;
 
@@ -611,41 +611,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (analyticsToggles.length > 0) {
-    analyticsToggles.forEach((toggle) => {
-      if (!(toggle instanceof HTMLButtonElement)) {
+  const closeAnalyticsModal = () => {
+    if (!(analyticsModal instanceof HTMLElement)) {
+      return;
+    }
+
+    analyticsModal.hidden = true;
+  };
+
+  const setAnalyticsText = (selector, value) => {
+    if (!(analyticsModal instanceof HTMLElement)) {
+      return;
+    }
+
+    const element = analyticsModal.querySelector(selector);
+    if (element instanceof HTMLElement) {
+      element.textContent = value;
+    }
+  };
+
+  if (analyticsModal instanceof HTMLElement) {
+    analyticsModal.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
         return;
       }
 
-      toggle.addEventListener('click', () => {
-        const targetId = toggle.getAttribute('data-analytics-toggle') || '';
-        if (targetId === '') {
-          return;
-        }
-
-        const detailsRow = document.getElementById(targetId);
-        if (!(detailsRow instanceof HTMLTableRowElement)) {
-          return;
-        }
-
-        const isHidden = detailsRow.hasAttribute('hidden');
-
-        analyticsToggles.forEach((otherToggle) => {
-          if (!(otherToggle instanceof HTMLButtonElement)) {
-            return;
-          }
-
-          const otherId = otherToggle.getAttribute('data-analytics-toggle') || '';
-          const otherRow = otherId !== '' ? document.getElementById(otherId) : null;
-          if (otherRow instanceof HTMLTableRowElement) {
-            otherRow.hidden = true;
-          }
-          otherToggle.setAttribute('aria-expanded', 'false');
-        });
-
-        detailsRow.hidden = !isHidden;
-        toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
-      });
+      if (target === analyticsModal || target.closest('[data-analytics-close]')) {
+        closeAnalyticsModal();
+      }
     });
   }
 
@@ -687,6 +681,57 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         return;
       }
+    }
+
+    const analyticsOpenButton = target.closest('[data-analytics-open]');
+    if (analyticsOpenButton instanceof HTMLElement && analyticsModal instanceof HTMLElement) {
+      event.preventDefault();
+      const payloadRaw = analyticsOpenButton.getAttribute('data-analytics-open') || '';
+      if (payloadRaw === '') {
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(payloadRaw);
+        setAnalyticsText('[data-analytics-modal-title]', payload.title || 'Learner Progress');
+        setAnalyticsText('[data-analytics-modal-name]', payload.name || 'Student');
+        setAnalyticsText('[data-analytics-modal-email]', payload.email || '');
+        setAnalyticsText('[data-analytics-modal-email-copy]', payload.email || '');
+        setAnalyticsText('[data-analytics-modal-course]', payload.title || '');
+        setAnalyticsText('[data-analytics-modal-subject]', payload.subject || '');
+        setAnalyticsText('[data-analytics-modal-level]', payload.level || '');
+        setAnalyticsText('[data-analytics-modal-progress]', payload.progress || '0%');
+        setAnalyticsText('[data-analytics-modal-steps]', payload.completed_steps || '0 / 0');
+        setAnalyticsText('[data-analytics-modal-quizzes]', payload.quiz_checks || '0 / 0');
+        setAnalyticsText('[data-analytics-modal-status]', payload.status || 'Not started');
+        setAnalyticsText('[data-analytics-modal-saved]', payload.saved || 'No');
+        setAnalyticsText('[data-analytics-modal-activity]', payload.last_activity || '--');
+        setAnalyticsText('[data-analytics-modal-enrolled]', payload.enrolled_at || '--');
+        setAnalyticsText('[data-analytics-modal-rating]', payload.rating || 'No rating yet');
+        setAnalyticsText('[data-analytics-modal-comment]', payload.comment || 'No written feedback submitted.');
+        setAnalyticsText('[data-analytics-modal-risk]', payload.risk || 'Healthy');
+
+        const courseLink = analyticsModal.querySelector('[data-analytics-modal-course-link]');
+        if (courseLink instanceof HTMLAnchorElement) {
+          courseLink.href = payload.course_url || '#';
+        }
+
+        analyticsModal.querySelectorAll('[data-analytics-target-user]').forEach((input) => {
+          if (input instanceof HTMLInputElement) {
+            input.value = String(payload.user_id || 0);
+          }
+        });
+        analyticsModal.querySelectorAll('[data-analytics-target-course]').forEach((input) => {
+          if (input instanceof HTMLInputElement) {
+            input.value = String(payload.course_id || 0);
+          }
+        });
+
+        analyticsModal.hidden = false;
+      } catch (error) {
+        console.error('Unable to open analytics details.', error);
+      }
+      return;
     }
 
     const toggle = target.closest('[data-password-toggle]');
@@ -763,6 +808,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminConfirmModal instanceof HTMLElement && !adminConfirmModal.hidden) {
       adminConfirmModal.hidden = true;
       pendingConfirmAction = null;
+    }
+
+    if (analyticsModal instanceof HTMLElement && !analyticsModal.hidden) {
+      analyticsModal.hidden = true;
     }
   });
 });
