@@ -6,11 +6,17 @@ const LEARNLY_RUNTIME_SCHEMA_VERSION = 2;
 function db(): PDO
 {
     static $pdo = null;
+    static $isMigrating = false;
 
     if ($pdo instanceof PDO) {
-        if (should_run_runtime_schema()) {
-            ensure_runtime_schema($pdo);
-            mark_runtime_schema_checked();
+        if (!$isMigrating && should_run_runtime_schema()) {
+            $isMigrating = true;
+            try {
+                ensure_runtime_schema($pdo);
+                mark_runtime_schema_checked();
+            } finally {
+                $isMigrating = false;
+            }
         }
         return $pdo;
     }
@@ -35,8 +41,13 @@ function db(): PDO
 
     $pdo = new PDO($dsn, $config['DB_USER'], $config['DB_PASS'], $options);
     if (should_run_runtime_schema()) {
-        ensure_runtime_schema($pdo);
-        mark_runtime_schema_checked();
+        $isMigrating = true;
+        try {
+            ensure_runtime_schema($pdo);
+            mark_runtime_schema_checked();
+        } finally {
+            $isMigrating = false;
+        }
     }
     return $pdo;
 }
