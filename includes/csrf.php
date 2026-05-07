@@ -19,7 +19,7 @@ function verify_csrf(): void
     $contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
     if (empty($_POST) && $contentLength > 0) {
         http_response_code(413);
-        exit('Upload is too large or incomplete. Please use a smaller file and try again.');
+        exit('Upload is too large or incomplete for the current server limit. Please use a smaller file and try again.');
     }
 
     $token = $_POST['csrf_token'] ?? '';

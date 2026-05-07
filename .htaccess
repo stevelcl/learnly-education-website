@@ -1,5 +1,10 @@
 RewriteEngine On
 
+php_value upload_max_filesize 64M
+php_value post_max_size 64M
+php_value max_input_time 180
+php_value max_execution_time 180
+
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
@@ -19,6 +24,7 @@ RewriteRule ^admin/users/?$ admin-users.php [L,QSA,NC]
 RewriteRule ^admin/analytics/?$ admin-analytics.php [L,QSA,NC]
 RewriteRule ^admin/feedback/?$ admin-feedback.php [L,QSA,NC]
 RewriteRule ^admin/forum/?$ admin-forum.php [L,QSA,NC]
+RewriteRule ^admin/forum/thread/([0-9]+)/?$ admin-forum-thread.php?id=$1 [L,QSA,NC]
 RewriteRule ^admin/settings/?$ admin-settings.php [L,QSA,NC]
 RewriteRule ^book/([0-9]+)/?$ book.php?id=$1 [L,QSA,NC]
 RewriteRule ^learn/([0-9]+)/?$ learn.php?id=$1 [L,QSA,NC]
