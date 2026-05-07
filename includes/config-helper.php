@@ -134,17 +134,8 @@ function app_is_local_environment(): bool
         return $isLocal;
     }
 
-    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? ''));
     $dbHost = strtolower((string) (app_config()['DB_HOST'] ?? ''));
-
-    $localHosts = ['localhost', '127.0.0.1', '::1'];
-
-    if (in_array($host, $localHosts, true) || in_array($dbHost, $localHosts, true)) {
-        $isLocal = true;
-        return $isLocal;
-    }
-
-    if ($host !== '' && str_ends_with($host, '.local')) {
+    if (in_array($dbHost, ['localhost', '127.0.0.1', '::1'], true)) {
         $isLocal = true;
         return $isLocal;
     }
