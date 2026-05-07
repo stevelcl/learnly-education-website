@@ -23,6 +23,11 @@ function admin_site_home_url(): string
     return app_url();
 }
 
+function admin_settings_url(): string
+{
+    return app_url('admin/settings');
+}
+
 function admin_render_start(array $options): void
 {
     $title = $options['title'] ?? 'Admin';
@@ -67,11 +72,6 @@ function admin_render_start(array $options): void
                         <a class="<?= $activeNav === $key ? 'active' : '' ?>" href="<?= htmlspecialchars($item['href']) ?>"><?= htmlspecialchars($item['label']) ?></a>
                     <?php endforeach; ?>
                 </nav>
-                <div class="admin-sidebar-footer">
-                    <a class="button ghost small" href="<?= htmlspecialchars(app_url('admin')) ?>">Admin Home</a>
-                    <a class="button ghost small" href="<?= htmlspecialchars(admin_site_home_url()) ?>">Visit Site</a>
-                    <a class="button ghost small" href="<?= htmlspecialchars(app_url('logout.php')) ?>">Logout</a>
-                </div>
             </aside>
 
             <div class="admin-app-main">
@@ -98,16 +98,25 @@ function admin_render_start(array $options): void
                         </div>
                     </div>
                     <div class="admin-topbar-actions">
-                        <a class="button ghost small" href="<?= htmlspecialchars(app_url('admin')) ?>">Admin Home</a>
                         <?php foreach ($actions as $action): ?>
                             <a class="button<?= !empty($action['secondary']) ? ' ghost' : '' ?>" href="<?= htmlspecialchars($action['href']) ?>"><?= htmlspecialchars($action['label']) ?></a>
                         <?php endforeach; ?>
-                        <a class="button ghost small" href="<?= htmlspecialchars(app_url('logout.php')) ?>">Logout</a>
                         <?php if ($adminUser): ?>
-                            <div class="admin-user-chip">
-                                <strong><?= htmlspecialchars($adminUser['name']) ?></strong>
-                                <span><?= htmlspecialchars($adminUser['role']) ?></span>
-                            </div>
+                            <details class="admin-user-menu">
+                                <summary class="admin-user-chip">
+                                    <div>
+                                        <strong><?= htmlspecialchars($adminUser['name']) ?></strong>
+                                        <span><?= htmlspecialchars($adminUser['role']) ?></span>
+                                    </div>
+                                    <span class="admin-user-caret" aria-hidden="true">&#9662;</span>
+                                </summary>
+                                <div class="admin-user-dropdown">
+                                    <a href="<?= htmlspecialchars(app_url('admin')) ?>">Admin Home</a>
+                                    <a href="<?= htmlspecialchars(admin_site_home_url()) ?>">Visit Site</a>
+                                    <a href="<?= htmlspecialchars(admin_settings_url()) ?>">Settings</a>
+                                    <a href="<?= htmlspecialchars(app_url('logout.php')) ?>">Logout</a>
+                                </div>
+                            </details>
                         <?php endif; ?>
                     </div>
                 </header>

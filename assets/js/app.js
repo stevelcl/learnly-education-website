@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSidebar = document.querySelector('[data-admin-sidebar]');
   const adminSidebarToggle = document.querySelector('[data-admin-sidebar-toggle]');
   const adminSidebarClose = document.querySelector('[data-admin-sidebar-close]');
+  const adminUserMenu = document.querySelector('.admin-user-menu');
   const adminConfirmModal = document.querySelector('[data-admin-confirm-modal]');
   const adminConfirmMessage = document.querySelector('[data-admin-confirm-message]');
   const adminConfirmAccept = document.querySelector('[data-admin-confirm-accept]');
@@ -560,6 +561,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (adminUserMenu instanceof HTMLDetailsElement) {
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (!adminUserMenu.contains(target)) {
+        adminUserMenu.removeAttribute('open');
+      }
+    });
+  }
+
   document.querySelectorAll('[data-admin-toast]').forEach((toast) => {
     if (!(toast instanceof HTMLElement)) {
       return;
@@ -669,6 +683,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') {
       return;
+    }
+
+    if (adminUserMenu instanceof HTMLDetailsElement) {
+      adminUserMenu.removeAttribute('open');
     }
 
     if (searchForm instanceof HTMLFormElement && searchToggle instanceof HTMLButtonElement) {
