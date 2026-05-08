@@ -29,10 +29,9 @@ function analytics_base_query(array &$params, string $search, string $progressFi
     $where = ['u.deleted_at IS NULL', 'u.account_status <> "deleted"'];
 
     if ($showArchived) {
-        $where[] = '(ce.archived_at IS NOT NULL OR up.archived_at IS NOT NULL)';
+        $where[] = '(ce.archived_at IS NOT NULL OR up_archived.id IS NOT NULL)';
     } else {
         $where[] = 'ce.archived_at IS NULL';
-        $where[] = 'up.archived_at IS NULL';
     }
 
     if ($search !== '') {
@@ -45,7 +44,7 @@ function analytics_base_query(array &$params, string $search, string $progressFi
     }
 
     if ($savedFilter === 'saved') {
-        $where[] = 'COALESCE(up.saved, 0) = 1';
+        $where[] = 'COALESCE(up.saved, up_archived.saved, 0) = 1';
     }
 
     if (!$showArchived && $progressFilter === 'completed') {
@@ -61,7 +60,8 @@ function analytics_base_query(array &$params, string $search, string $progressFi
     return ' FROM course_enrollments ce
         JOIN users u ON u.id = ce.user_id
         JOIN courses c ON c.id = ce.course_id
-        LEFT JOIN user_progress up ON up.user_id = ce.user_id AND up.course_id = ce.course_id
+        LEFT JOIN user_progress up ON up.user_id = ce.user_id AND up.course_id = ce.course_id AND up.archived_at IS NULL
+        LEFT JOIN user_progress up_archived ON up_archived.user_id = ce.user_id AND up_archived.course_id = ce.course_id AND up_archived.archived_at IS NOT NULL
         LEFT JOIN (
             SELECT
                 user_id,
@@ -318,10 +318,10 @@ $rows = fetch_all(
         c.level,
         ce.enrolled_at,
         ce.archived_at AS enrollment_archived_at,
-        COALESCE(up.saved, 0) AS saved,
-        COALESCE(up.progress_percent, 0) AS progress_percent,
-        up.updated_at,
-        up.archived_at,
+        COALESCE(up.saved, up_archived.saved, 0) AS saved,
+        COALESCE(up.progress_percent, up_archived.progress_percent, 0) AS progress_percent,
+        COALESCE(up.updated_at, up_archived.updated_at) AS updated_at,
+        COALESCE(up.archived_at, up_archived.archived_at) AS archived_at,
         COALESCE(cp.completed_items, 0) AS completed_items,
         COALESCE(cp.completed_quizzes, 0) AS completed_quizzes,
         COALESCE(ct.total_items, 0) AS total_items,

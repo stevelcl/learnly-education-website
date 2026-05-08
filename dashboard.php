@@ -9,18 +9,18 @@ if (is_admin($user)) {
 }
 
 $progressRows = fetch_all(
-    'SELECT c.id, c.title, c.subject, up.saved, up.updated_at,
+    'SELECT c.id, c.title, c.subject, COALESCE(up.saved, 0) AS saved, up.updated_at,
             COALESCE(cp.completed_items, 0) AS completed_items,
             COALESCE(ct.total_items, 0) AS total_items,
             COALESCE(up.progress_percent, 0) AS progress_percent
-     FROM user_progress up
-     JOIN courses c ON c.id = up.course_id
-     JOIN course_enrollments ce ON ce.user_id = up.user_id AND ce.course_id = up.course_id AND ce.archived_at IS NULL
+     FROM course_enrollments ce
+     JOIN courses c ON c.id = ce.course_id
+     LEFT JOIN user_progress up ON up.user_id = ce.user_id AND up.course_id = ce.course_id AND up.archived_at IS NULL
      LEFT JOIN (
         SELECT user_id, course_id, COUNT(*) AS completed_items
         FROM course_item_progress
         GROUP BY user_id, course_id
-     ) cp ON cp.user_id = up.user_id AND cp.course_id = up.course_id
+     ) cp ON cp.user_id = ce.user_id AND cp.course_id = ce.course_id
      LEFT JOIN (
         SELECT grouped.course_id, COUNT(*) AS total_items
         FROM (
@@ -29,9 +29,9 @@ $progressRows = fetch_all(
             SELECT course_id, id FROM quiz_questions
         ) grouped
         GROUP BY grouped.course_id
-     ) ct ON ct.course_id = up.course_id
-     WHERE up.user_id = ? AND up.archived_at IS NULL
-     ORDER BY up.updated_at DESC',
+     ) ct ON ct.course_id = ce.course_id
+     WHERE ce.user_id = ? AND ce.archived_at IS NULL
+     ORDER BY COALESCE(up.updated_at, ce.enrolled_at) DESC',
     [$user['id']]
 );
 

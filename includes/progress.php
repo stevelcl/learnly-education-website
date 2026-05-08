@@ -20,6 +20,12 @@ function enroll_in_course(int $userId, int $courseId): void
          ON DUPLICATE KEY UPDATE archived_at = NULL, enrolled_at = enrolled_at'
     );
     $stmt->execute([$userId, $courseId]);
+
+    db()->prepare(
+        'UPDATE user_progress
+         SET archived_at = NULL, updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = ? AND course_id = ?'
+    )->execute([$userId, $courseId]);
 }
 
 function course_total_items(int $courseId): int
