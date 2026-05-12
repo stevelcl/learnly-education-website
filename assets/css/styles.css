@@ -3598,7 +3598,7 @@ body.admin-app {
 
 /* Tab panels */
 .profile-tab-panel {
-    animation: profileFadeIn 0.18s ease;
+    animation: profileFadeIn 0.18s ease both;
 }
 
 @keyframes profileFadeIn {

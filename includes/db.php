@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config-helper.php';
 
-const LEARNLY_RUNTIME_SCHEMA_VERSION = 6;
+const LEARNLY_RUNTIME_SCHEMA_VERSION = 7;
 
 function db(): PDO
 {
