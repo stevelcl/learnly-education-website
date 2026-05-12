@@ -834,10 +834,12 @@ button:active {
     -webkit-box-orient: vertical;
     overflow: hidden;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
 }
 
 .expandable-copy-block.detail .expandable-copy.is-collapsed {
     -webkit-line-clamp: 4;
+    line-clamp: 4;
 }
 
 .teaser-toggle {
