@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter a valid email address.';
     } elseif (strlen($password) < 8) {
         $error = 'Password must be at least 8 characters long.';
-    } elseif (fetch_one('SELECT id FROM users WHERE email = ?', [$email])) {
+    } elseif (fetch_one('SELECT id FROM users WHERE email = ? AND deleted_at IS NULL AND account_status <> "deleted"', [$email])) {
         $error = 'An account with this email already exists.';
     } else {
         $fullName = $firstName . ' ' . $lastName;

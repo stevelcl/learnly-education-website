@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($bio !== '' && strlen($bio) > 600) {
             $error = 'Bio must be 600 characters or fewer.';
         } else {
-            $existing = fetch_one('SELECT id FROM users WHERE email = ? AND id != ?', [$email, $user['id']]);
+            $existing = fetch_one('SELECT id FROM users WHERE email = ? AND id != ? AND deleted_at IS NULL AND account_status <> "deleted"', [$email, $user['id']]);
             if ($existing) {
                 $error = 'That email is already registered to another account.';
             } else {
