@@ -4,13 +4,15 @@ USE learnly;
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
-    email VARCHAR(190) NOT NULL UNIQUE,
+    email VARCHAR(190) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('student', 'admin') NOT NULL DEFAULT 'student',
     account_status ENUM('active', 'suspended', 'deleted') NOT NULL DEFAULT 'active',
     suspended_at DATETIME NULL,
     deleted_at DATETIME NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    email_active VARCHAR(190) GENERATED ALWAYS AS (CASE WHEN account_status != 'deleted' THEN email ELSE NULL END) STORED,
+    UNIQUE KEY unique_active_email (email_active)
 );
 
 CREATE TABLE password_resets (
