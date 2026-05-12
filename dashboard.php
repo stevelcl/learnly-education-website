@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/progress.php';
 $user = require_login();
 
 if (is_admin($user)) {
@@ -8,32 +9,7 @@ if (is_admin($user)) {
     exit;
 }
 
-$progressRows = fetch_all(
-    'SELECT c.id, c.title, c.subject, COALESCE(up.saved, 0) AS saved, up.updated_at,
-            COALESCE(cp.completed_items, 0) AS completed_items,
-            COALESCE(ct.total_items, 0) AS total_items,
-            COALESCE(up.progress_percent, 0) AS progress_percent
-     FROM course_enrollments ce
-     JOIN courses c ON c.id = ce.course_id
-     LEFT JOIN user_progress up ON up.user_id = ce.user_id AND up.course_id = ce.course_id AND up.archived_at IS NULL
-     LEFT JOIN (
-        SELECT user_id, course_id, COUNT(*) AS completed_items
-        FROM course_item_progress
-        GROUP BY user_id, course_id
-     ) cp ON cp.user_id = ce.user_id AND cp.course_id = ce.course_id
-     LEFT JOIN (
-        SELECT grouped.course_id, COUNT(*) AS total_items
-        FROM (
-            SELECT course_id, id FROM course_resources WHERE resource_type <> "quiz"
-            UNION ALL
-            SELECT course_id, id FROM quiz_questions
-        ) grouped
-        GROUP BY grouped.course_id
-     ) ct ON ct.course_id = ce.course_id
-     WHERE ce.user_id = ? AND ce.archived_at IS NULL
-     ORDER BY COALESCE(up.updated_at, ce.enrolled_at) DESC',
-    [$user['id']]
-);
+$progressRows = fetch_enrolled_courses_with_progress($user['id']);
 
 $activeOrders = fetch_all(
     'SELECT * FROM orders
@@ -56,7 +32,13 @@ include __DIR__ . '/includes/header.php';
 
 <section class="section">
     <div class="container">
-        <h1>Welcome, <?= htmlspecialchars($user['name']) ?></h1>
+        <div class="dashboard-welcome">
+            <div>
+                <h1>Welcome back, <?= htmlspecialchars((string) ($user['first_name'] ?: $user['name'])) ?></h1>
+                <p class="muted">Here's a summary of your learning activity and orders.</p>
+            </div>
+            <a class="button ghost" href="profile.php">View Profile</a>
+        </div>
         <div class="grid">
             <article class="panel">
                 <h2>Saved Progress</h2>
@@ -107,6 +89,21 @@ include __DIR__ . '/includes/header.php';
                 <?php foreach ($posts as $post): ?>
                     <p><a href="post.php?id=<?= (int) $post['id'] ?>"><?= htmlspecialchars($post['title']) ?></a><br><span class="muted"><?= htmlspecialchars($post['status']) ?></span></p>
                 <?php endforeach; ?>
+            </article>
+
+            <article class="panel">
+                <h2>Your Profile</h2>
+                <div class="dashboard-profile-row">
+                    <div class="dashboard-profile-avatar" aria-hidden="true"><?= htmlspecialchars(user_initials($user)) ?></div>
+                    <div>
+                        <strong><?= htmlspecialchars((string) ($user['name'] ?? '')) ?></strong>
+                        <p class="muted"><?= htmlspecialchars((string) ($user['email'] ?? '')) ?></p>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a class="button small" href="profile.php">View Profile</a>
+                    <a class="button small ghost" href="profile.php?tab=edit">Edit</a>
+                </div>
             </article>
 
             <?php if (is_admin($user)): ?>

@@ -79,3 +79,40 @@ function mark_course_item_complete(int $userId, int $courseId, string $itemType,
     $stmt->execute([$userId, $courseId, $itemType, $itemId]);
     sync_user_course_progress($userId, $courseId);
 }
+
+function fetch_enrolled_courses_with_progress(int $userId, ?int $limit = null): array
+{
+    $sql = 'SELECT c.id, c.title, c.subject, c.level,
+                   COALESCE(up.progress_percent, 0) AS progress_percent,
+                   COALESCE(cp.completed_items, 0) AS completed_items,
+                   COALESCE(ct.total_items, 0) AS total_items,
+                   COALESCE(up.saved, 0) AS saved,
+                   ce.enrolled_at,
+                   up.updated_at
+            FROM course_enrollments ce
+            JOIN courses c ON c.id = ce.course_id
+            LEFT JOIN user_progress up
+                ON up.user_id = ce.user_id AND up.course_id = ce.course_id AND up.archived_at IS NULL
+            LEFT JOIN (
+                SELECT user_id, course_id, COUNT(*) AS completed_items
+                FROM course_item_progress
+                GROUP BY user_id, course_id
+            ) cp ON cp.user_id = ce.user_id AND cp.course_id = ce.course_id
+            LEFT JOIN (
+                SELECT course_id, COUNT(*) AS total_items
+                FROM (
+                    SELECT course_id, id FROM course_resources WHERE resource_type <> "quiz"
+                    UNION ALL
+                    SELECT course_id, id FROM quiz_questions
+                ) g
+                GROUP BY course_id
+            ) ct ON ct.course_id = ce.course_id
+            WHERE ce.user_id = ? AND ce.archived_at IS NULL
+            ORDER BY COALESCE(up.updated_at, ce.enrolled_at) DESC';
+
+    if ($limit !== null) {
+        $sql .= ' LIMIT ' . (int) $limit;
+    }
+
+    return fetch_all($sql, [$userId]);
+}

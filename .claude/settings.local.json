@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -l \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\GitHub\\\\learnly-education-website\\\\profile.php\")",
+      "Bash(php -l \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\GitHub\\\\learnly-education-website\\\\includes\\\\db.php\")",
+      "Bash(php -l \"C:\\\\Users\\\\User\\\\OneDrive\\\\Documents\\\\GitHub\\\\learnly-education-website\\\\includes\\\\header.php\")",
+      "Bash(php *)",
+      "Bash(findstr /r \"strtoupper.*mb_substr\" *.php includes/*.php)"
+    ]
+  }
+}

@@ -47,6 +47,7 @@ $baseHref = app_base_path();
             <a href="cart.php">Cart <span class="badge"><?= cart_count() ?></span></a>
             <?php if ($user): ?>
                 <a href="dashboard.php">Dashboard</a>
+                <a href="profile.php">Profile</a>
                 <?php if (is_admin($user)): ?>
                     <a href="<?= htmlspecialchars(app_url('admin')) ?>">Admin</a>
                 <?php endif; ?>

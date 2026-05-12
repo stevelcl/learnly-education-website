@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config-helper.php';
 
-const LEARNLY_RUNTIME_SCHEMA_VERSION = 4;
+const LEARNLY_RUNTIME_SCHEMA_VERSION = 6;
 
 function db(): PDO
 {
@@ -318,6 +318,31 @@ function ensure_runtime_schema(PDO $pdo): void
         'forum_posts',
         'report_count',
         'ALTER TABLE forum_posts ADD COLUMN report_count INT NOT NULL DEFAULT 0 AFTER replies_locked'
+    );
+
+    ensure_column(
+        $pdo,
+        'users',
+        'bio',
+        'ALTER TABLE users ADD COLUMN bio TEXT NULL AFTER email'
+    );
+    ensure_column(
+        $pdo,
+        'users',
+        'phone',
+        "ALTER TABLE users ADD COLUMN phone VARCHAR(40) NULL AFTER bio"
+    );
+    ensure_column(
+        $pdo,
+        'users',
+        'first_name',
+        'ALTER TABLE users ADD COLUMN first_name VARCHAR(60) NULL AFTER name'
+    );
+    ensure_column(
+        $pdo,
+        'users',
+        'last_name',
+        'ALTER TABLE users ADD COLUMN last_name VARCHAR(60) NULL AFTER first_name'
     );
 
     $pdo->exec('UPDATE quiz_questions SET sort_order = id + 1000 WHERE sort_order = 0');

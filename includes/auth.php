@@ -9,7 +9,7 @@ function current_user(): ?array
     }
 
     return fetch_one(
-        'SELECT id, name, email, role, account_status
+        'SELECT id, name, first_name, last_name, email, role, account_status
          FROM users
          WHERE id = ? AND deleted_at IS NULL AND account_status <> "deleted"',
         [$_SESSION['user_id']]
@@ -58,4 +58,18 @@ function require_admin(): array
     }
 
     return $user;
+}
+
+function user_initials(array $user): string
+{
+    $f = mb_substr(trim((string) ($user['first_name'] ?? '')), 0, 1);
+    $l = mb_substr(trim((string) ($user['last_name'] ?? '')), 0, 1);
+    if ($f !== '' && $l !== '') {
+        return strtoupper($f . $l);
+    }
+    $words = array_values(array_filter(explode(' ', trim((string) ($user['name'] ?? '')))));
+    if (count($words) >= 2) {
+        return strtoupper(mb_substr($words[0], 0, 1) . mb_substr(end($words), 0, 1));
+    }
+    return strtoupper(mb_substr((string) ($user['name'] ?? ''), 0, 2)) ?: 'U';
 }
