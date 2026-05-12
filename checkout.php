@@ -79,14 +79,14 @@ include __DIR__ . '/includes/header.php';
             <?php if (!$books && !$success): ?>
                 <p>Your cart is empty. <a href="bookstore.php">Browse books</a>.</p>
             <?php elseif ($books): ?>
-                <table>
+                <table class="cart-table">
                     <thead><tr><th>Book</th><th>Qty</th><th>Subtotal</th></tr></thead>
                     <tbody>
                     <?php foreach ($books as $book): ?>
                         <tr>
                             <td><img src="<?= htmlspecialchars(book_cover_src($book['cover_url'])) ?>" alt="<?= htmlspecialchars($book['title']) ?>" class="cart-book-cover" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/images/book-placeholder.svg';"><?= htmlspecialchars($book['title']) ?></td>
-                            <td><?= (int) $book['quantity'] ?></td>
-                            <td>RM <?= number_format((float) $book['subtotal'], 2) ?></td>
+                            <td data-label="Qty"><?= (int) $book['quantity'] ?></td>
+                            <td data-label="Subtotal">RM <?= number_format((float) $book['subtotal'], 2) ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>

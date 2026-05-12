@@ -4079,6 +4079,31 @@ html.js [data-reveal].is-visible {
     .footer-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    /* Profile: tabs become horizontal scroll strip on tablet */
+    .profile-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 0.25rem;
+    }
+
+    .profile-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .profile-tab {
+        flex-shrink: 0;
+    }
+
+    .profile-hero {
+        padding: 2rem 0 1.5rem;
+    }
+
+    .profile-stats {
+        max-width: 100%;
+    }
 }
 
 @media (max-width: 760px) {
@@ -4460,5 +4485,161 @@ html.js [data-reveal].is-visible {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+    }
+
+    /* Profile hero: stack on phone */
+    .profile-hero {
+        padding: 1.4rem 0 1rem;
+    }
+
+    .profile-hero-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.9rem;
+    }
+
+    .profile-hero-actions {
+        width: 100%;
+    }
+
+    .profile-hero-actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .profile-name-row h1 {
+        font-size: clamp(1.4rem, 7.5vw, 1.9rem);
+    }
+
+    /* Profile tabs: nowrap + scroll (reinforces tablet override) */
+    .profile-tabs {
+        padding: 0.25rem;
+        padding-bottom: 0.2rem;
+    }
+
+    /* Dashboard welcome: stack vertically on phone */
+    .dashboard-welcome {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* Cart table mobile: card layout */
+    .cart-table tbody tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+        padding: 0.85rem;
+        margin-bottom: 0.6rem;
+        background: rgba(255, 255, 255, 0.94);
+        border-radius: 18px;
+        border: 1px solid rgba(123, 149, 196, 0.16);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .cart-table td {
+        display: block;
+        padding: 0;
+        border: none;
+    }
+
+    .cart-table td:first-child {
+        flex: 1 1 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-weight: 600;
+    }
+
+    .cart-table td:not(:first-child) {
+        flex: 1;
+        min-width: 72px;
+    }
+
+    .cart-table td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        margin-bottom: 0.2rem;
+    }
+
+    .cart-table .quantity-input {
+        max-width: 80px;
+    }
+}
+
+/* ── Very small phones (≤ 480 px) ─────────────────────────── */
+@media (max-width: 480px) {
+    .container,
+    .hero-inner {
+        width: calc(100% - 1.5rem);
+    }
+
+    .section {
+        padding: 1.25rem 0;
+    }
+
+    .profile-hero {
+        padding: 1.1rem 0 0.85rem;
+    }
+
+    .profile-avatar {
+        width: 68px;
+        height: 68px;
+        font-size: 1.4rem;
+    }
+
+    .profile-stats {
+        gap: 0.55rem;
+    }
+
+    .profile-stat {
+        padding: 0.65rem 0.75rem;
+    }
+
+    .profile-stat strong {
+        font-size: 1.2rem;
+    }
+
+    .profile-stat span {
+        font-size: 0.8rem;
+    }
+
+    .profile-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-tab {
+        padding: 0.45rem 0.7rem;
+        font-size: 0.82rem;
+    }
+
+    .dashboard-profile-avatar {
+        width: 44px;
+        height: 44px;
+        font-size: 0.95rem;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel,
+    .card,
+    .feature-card {
+        padding: 0.85rem;
+    }
+
+    .button,
+    button {
+        min-height: 44px;
+    }
+
+    h1 {
+        font-size: clamp(1.6rem, 8vw, 2.2rem);
     }
 }
