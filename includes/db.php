@@ -345,9 +345,9 @@ function ensure_runtime_schema(PDO $pdo): void
     $pdo->exec("UPDATE users SET role = 'student' WHERE role = 'moderator'");
     $pdo->exec("UPDATE users SET account_status = 'active' WHERE account_status IS NULL OR account_status = ''");
     $pdo->exec("UPDATE course_reviews SET moderation_status = 'published' WHERE moderation_status IS NULL OR moderation_status = ''");
-    $pdo->exec("UPDATE orders SET deleted_at = NULL WHERE deleted_at = '0000-00-00 00:00:00'");
-    $pdo->exec("UPDATE course_enrollments SET archived_at = NULL WHERE archived_at = '0000-00-00 00:00:00'");
-    $pdo->exec("UPDATE user_progress SET archived_at = NULL WHERE archived_at = '0000-00-00 00:00:00'");
+    $pdo->exec('UPDATE orders SET deleted_at = NULL WHERE deleted_at IS NOT NULL AND YEAR(deleted_at) = 0');
+    $pdo->exec('UPDATE course_enrollments SET archived_at = NULL WHERE archived_at IS NOT NULL AND YEAR(archived_at) = 0');
+    $pdo->exec('UPDATE user_progress SET archived_at = NULL WHERE archived_at IS NOT NULL AND YEAR(archived_at) = 0');
 }
 
 function ensure_column(PDO $pdo, string $table, string $column, string $sql): void
@@ -426,7 +426,7 @@ function ensure_order_item_book_reference(PDO $pdo): void
     }
 
     $foreignKeys = fetch_all(
-        'SELECT kcu.constraint_name, rc.delete_rule
+        'SELECT kcu.constraint_name AS constraint_name, rc.delete_rule AS delete_rule
          FROM information_schema.key_column_usage kcu
          JOIN information_schema.referential_constraints rc
            ON rc.constraint_schema = kcu.table_schema
