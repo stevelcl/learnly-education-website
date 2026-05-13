@@ -425,58 +425,47 @@ function ensure_order_item_book_reference(PDO $pdo): void
         $pdo->exec('ALTER TABLE order_items MODIFY COLUMN book_id INT NULL');
     }
 
-    $existingTargetConstraint = fetch_one(
-        'SELECT delete_rule
-         FROM information_schema.referential_constraints
-         WHERE constraint_schema = DATABASE()
-           AND table_name = ?
-           AND constraint_name = ?
-         LIMIT 1',
-        ['order_items', 'fk_order_items_book']
-    );
-
-    if (($existingTargetConstraint['delete_rule'] ?? '') === 'SET NULL') {
-        return;
-    }
-
     $foreignKeys = fetch_all(
-        'SELECT constraint_name
-         FROM information_schema.key_column_usage
-         WHERE table_schema = DATABASE()
-           AND table_name = ?
-           AND column_name = ?
-           AND referenced_table_name = ?',
+        'SELECT kcu.constraint_name, rc.delete_rule
+         FROM information_schema.key_column_usage kcu
+         JOIN information_schema.referential_constraints rc
+           ON rc.constraint_schema = kcu.table_schema
+          AND rc.constraint_name = kcu.constraint_name
+         WHERE kcu.table_schema = DATABASE()
+           AND kcu.table_name = ?
+           AND kcu.column_name = ?
+           AND kcu.referenced_table_name = ?',
         ['order_items', 'book_id', 'books']
     );
+
+    foreach ($foreignKeys as $foreignKey) {
+        if (
+            $foreignKey['constraint_name'] === 'fk_order_items_book' &&
+            $foreignKey['delete_rule'] === 'SET NULL'
+        ) {
+            return;
+        }
+    }
 
     foreach ($foreignKeys as $foreignKey) {
         $constraintName = $foreignKey['constraint_name'] ?? '';
         if ($constraintName === '') {
             continue;
         }
-
-        $deleteRule = fetch_one(
-            'SELECT delete_rule
-             FROM information_schema.referential_constraints
-             WHERE constraint_schema = DATABASE()
-               AND table_name = ?
-               AND constraint_name = ?
-             LIMIT 1',
-            ['order_items', $constraintName]
-        );
-
-        if (($deleteRule['delete_rule'] ?? '') === 'SET NULL') {
-            return;
-        }
-
         $pdo->exec('ALTER TABLE order_items DROP FOREIGN KEY `' . str_replace('`', '``', $constraintName) . '`');
     }
 
-    $pdo->exec(
-        'ALTER TABLE order_items
-         ADD CONSTRAINT fk_order_items_book
-         FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE SET NULL'
-    );
+    try {
+        $pdo->exec(
+            'ALTER TABLE order_items
+             ADD CONSTRAINT fk_order_items_book
+             FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE SET NULL'
+        );
+    } catch (\PDOException $e) {
+        if (strpos($e->getMessage(), '1826') === false) {
+            throw $e;
+        }
+    }
 }
 
 function fetch_all(string $sql, array $params = []): array
