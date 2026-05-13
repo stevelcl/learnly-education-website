@@ -80,6 +80,12 @@ $user = fetch_one(
     [$user['id']]
 ) ?? $user;
 
+if (empty($user['first_name']) && !empty($user['name'])) {
+    $nameParts = explode(' ', trim((string) $user['name']), 2);
+    $user['first_name'] = $nameParts[0] ?? '';
+    $user['last_name']  = $user['last_name'] ?: ($nameParts[1] ?? '');
+}
+
 // Stats counts — always needed for the hero bar
 $courseCount = (int) (fetch_one(
     'SELECT COUNT(*) AS c FROM course_enrollments WHERE user_id = ? AND archived_at IS NULL',
