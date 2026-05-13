@@ -1,4 +1,3 @@
-Options +FollowSymLinks
 RewriteEngine On
 
 php_value upload_max_filesize 64M
