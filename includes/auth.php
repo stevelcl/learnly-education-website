@@ -21,7 +21,7 @@ function require_login(): array
     $user = current_user();
     if (!$user) {
         if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'GET') {
-            $_SESSION['post_login_redirect'] = app_safe_redirect_target(app_request_uri(), app_url('dashboard.php'));
+            $_SESSION['post_login_redirect'] = app_safe_redirect_target(app_request_uri(), app_url('profile.php'));
         }
         header('Location: ' . app_url('login.php'));
         exit;

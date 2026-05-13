@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $redirectTarget = ($requestedTarget !== '' && !str_contains($requestedTarget, '/admin'))
                 ? $requestedTarget
-                : app_url('dashboard.php');
+                : app_url('profile.php');
         }
 
         header('Location: ' . $redirectTarget);

@@ -38,7 +38,7 @@ include __DIR__ . '/includes/header.php';
             <p>Learnly brings together structured learning content, progress tracking, community support, and a student-focused bookstore in one clean platform.</p>
             <div class="actions">
                 <?php if ($user): ?>
-                    <a class="button" href="dashboard.php">My Dashboard</a>
+                    <a class="button" href="profile.php">My Dashboard</a>
                     <a class="button ghost-light" href="profile.php">View Profile</a>
                 <?php else: ?>
                     <a class="button" href="courses.php">Explore Courses</a>

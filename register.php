@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             )->execute([$fullName, $firstName, $lastName, password_hash($password, PASSWORD_DEFAULT), $existing['id']]);
             $_SESSION['user_id'] = (int) $existing['id'];
             sync_session_cart_to_user((int) $existing['id']);
-            header('Location: dashboard.php');
+            header('Location: profile.php');
             exit;
         } else {
             $error = 'An account with this email already exists.';
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             )->execute([$fullName, $firstName, $lastName, $email, password_hash($password, PASSWORD_DEFAULT)]);
             $_SESSION['user_id'] = (int) db()->lastInsertId();
             sync_session_cart_to_user((int) $_SESSION['user_id']);
-            header('Location: dashboard.php');
+            header('Location: profile.php');
             exit;
         } catch (\PDOException $e) {
             if (strpos($e->getMessage(), '1062') !== false) {
