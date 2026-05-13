@@ -25,20 +25,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter a valid email address.';
     } elseif (strlen($password) < 8) {
         $error = 'Password must be at least 8 characters long.';
-    } elseif (fetch_one('SELECT id FROM users WHERE email = ? AND account_status = "active"', [$email])) {
-        $error = 'An account with this email already exists.';
-    } elseif (fetch_one('SELECT id FROM users WHERE email = ? AND account_status = "suspended"', [$email])) {
-        $error = 'An account with this email is currently suspended.';
+    } elseif ($existing = fetch_one('SELECT account_status FROM users WHERE email = ?', [$email])) {
+        if (($existing['account_status'] ?? '') === 'suspended') {
+            $error = 'An account with this email is currently suspended.';
+        } else {
+            $error = 'An account with this email already exists.';
+        }
     } else {
         $fullName = $firstName . ' ' . $lastName;
         $stmt = db()->prepare(
             'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)'
         );
-        $stmt->execute([$fullName, $email, password_hash($password, PASSWORD_DEFAULT)]);
-        $_SESSION['user_id'] = (int) db()->lastInsertId();
-        sync_session_cart_to_user((int) $_SESSION['user_id']);
-        header('Location: dashboard.php');
-        exit;
+        try {
+            $stmt->execute([$fullName, $email, password_hash($password, PASSWORD_DEFAULT)]);
+            $_SESSION['user_id'] = (int) db()->lastInsertId();
+            sync_session_cart_to_user((int) $_SESSION['user_id']);
+            header('Location: dashboard.php');
+            exit;
+        } catch (\PDOException $e) {
+            if (strpos($e->getMessage(), '1062') !== false) {
+                $error = 'An account with this email already exists.';
+            } else {
+                throw $e;
+            }
+        }
     }
 }
 
