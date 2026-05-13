@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config-helper.php';
 
-const LEARNLY_RUNTIME_SCHEMA_VERSION = 7;
+const LEARNLY_RUNTIME_SCHEMA_VERSION = 8;
 
 function db(): PDO
 {
@@ -57,11 +57,6 @@ function should_run_runtime_schema(): bool
     static $shouldRun = null;
 
     if ($shouldRun !== null) {
-        return $shouldRun;
-    }
-
-    if (!app_is_local_environment()) {
-        $shouldRun = false;
         return $shouldRun;
     }
 

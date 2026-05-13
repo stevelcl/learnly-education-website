@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (($user['account_status'] ?? 'active') === 'suspended') {
         $error = 'This account is suspended. Please contact an administrator.';
     } elseif (($user['account_status'] ?? 'active') === 'deleted' || !empty($user['deleted_at'])) {
-        $error = 'This account is no longer available.';
+        $error = 'Account does not exist. Please register a new account.';
     } else {
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];

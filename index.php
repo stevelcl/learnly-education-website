@@ -27,12 +27,23 @@ include __DIR__ . '/includes/header.php';
 <section class="hero">
     <div class="hero-inner hero-grid">
         <div class="hero-copy" data-reveal="slide-up">
-            <span class="hero-pill">Built for undergraduate learning</span>
+            <span class="hero-pill">
+                <?php if ($user): ?>
+                    Welcome back, <?= htmlspecialchars((string) ($user['first_name'] ?: explode(' ', trim($user['name']))[0])) ?>
+                <?php else: ?>
+                    Built for undergraduate learning
+                <?php endif; ?>
+            </span>
             <h1>A modern study space for courses, questions, and academic books.</h1>
             <p>Learnly brings together structured learning content, progress tracking, community support, and a student-focused bookstore in one clean platform.</p>
             <div class="actions">
-                <a class="button" href="courses.php">Explore Courses</a>
-                <a class="button ghost-light" href="bookstore.php">Visit Bookstore</a>
+                <?php if ($user): ?>
+                    <a class="button" href="dashboard.php">My Dashboard</a>
+                    <a class="button ghost-light" href="profile.php">View Profile</a>
+                <?php else: ?>
+                    <a class="button" href="courses.php">Explore Courses</a>
+                    <a class="button ghost-light" href="bookstore.php">Visit Bookstore</a>
+                <?php endif; ?>
             </div>
             <div class="hero-quickstats">
                 <div>
