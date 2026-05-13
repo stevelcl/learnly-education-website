@@ -25,19 +25,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter a valid email address.';
     } elseif (strlen($password) < 8) {
         $error = 'Password must be at least 8 characters long.';
-    } elseif ($existing = fetch_one('SELECT account_status FROM users WHERE email = ?', [$email])) {
-        if (($existing['account_status'] ?? '') === 'suspended') {
+    } elseif ($existing = fetch_one('SELECT id, account_status FROM users WHERE email = ?', [$email])) {
+        $status = $existing['account_status'] ?? 'active';
+        if ($status === 'suspended') {
             $error = 'An account with this email is currently suspended.';
+        } elseif ($status === 'deleted') {
+            $fullName = $firstName . ' ' . $lastName;
+            db()->prepare(
+                'UPDATE users
+                 SET name = ?, first_name = ?, last_name = ?, password_hash = ?,
+                     account_status = \'active\', deleted_at = NULL, suspended_at = NULL,
+                     role = \'student\'
+                 WHERE id = ?'
+            )->execute([$fullName, $firstName, $lastName, password_hash($password, PASSWORD_DEFAULT), $existing['id']]);
+            $_SESSION['user_id'] = (int) $existing['id'];
+            sync_session_cart_to_user((int) $existing['id']);
+            header('Location: dashboard.php');
+            exit;
         } else {
             $error = 'An account with this email already exists.';
         }
     } else {
         $fullName = $firstName . ' ' . $lastName;
-        $stmt = db()->prepare(
-            'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)'
-        );
         try {
-            $stmt->execute([$fullName, $email, password_hash($password, PASSWORD_DEFAULT)]);
+            db()->prepare(
+                'INSERT INTO users (name, first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?, ?)'
+            )->execute([$fullName, $firstName, $lastName, $email, password_hash($password, PASSWORD_DEFAULT)]);
             $_SESSION['user_id'] = (int) db()->lastInsertId();
             sync_session_cart_to_user((int) $_SESSION['user_id']);
             header('Location: dashboard.php');
