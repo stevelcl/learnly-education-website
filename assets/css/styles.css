@@ -3576,7 +3576,7 @@ body.admin-app {
 }
 
 .profile-tab {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     flex: 1;
@@ -4098,7 +4098,7 @@ html.js [data-reveal].is-visible {
     }
 
     .profile-tab {
-        flex: 0 0 auto;
+        flex-shrink: 0;
     }
 
     .profile-hero {
