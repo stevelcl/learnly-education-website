@@ -22,17 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $firstName = trim($_POST['first_name'] ?? '');
         $lastName  = trim($_POST['last_name'] ?? '');
         $email     = strtolower(trim($_POST['email'] ?? ''));
-        $bio       = trim($_POST['bio'] ?? '');
-        $phone     = trim($_POST['phone'] ?? '');
-
         if ($firstName === '' || strlen($firstName) > 60) {
             $error = 'Please enter a valid first name (max 60 characters).';
         } elseif ($lastName === '' || strlen($lastName) > 60) {
             $error = 'Please enter a valid last name (max 60 characters).';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) {
             $error = 'Please enter a valid email address.';
-        } elseif ($bio !== '' && strlen($bio) > 600) {
-            $error = 'Bio must be 600 characters or fewer.';
         } else {
             $existing = fetch_one('SELECT id FROM users WHERE email = ? AND id != ? AND deleted_at IS NULL AND account_status <> "deleted"', [$email, $user['id']]);
             if ($existing) {
@@ -40,11 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $fullName = $firstName . ' ' . $lastName;
                 db()->prepare(
-                    'UPDATE users SET name = ?, first_name = ?, last_name = ?, email = ?, bio = ?, phone = ? WHERE id = ?'
+                    'UPDATE users SET name = ?, first_name = ?, last_name = ?, email = ? WHERE id = ?'
                 )->execute([
                     $fullName, $firstName, $lastName, $email,
-                    $bio !== '' ? $bio : null,
-                    $phone !== '' ? $phone : null,
                     $user['id'],
                 ]);
                 header('Location: profile.php?tab=edit&success=profile');
@@ -171,8 +164,6 @@ include __DIR__ . '/includes/header.php';
                 </p>
                 <?php if (!empty($user['bio'])): ?>
                     <p class="profile-bio"><?= htmlspecialchars((string) $user['bio']) ?></p>
-                <?php else: ?>
-                    <p class="profile-bio muted"><a href="profile.php?tab=edit">Add a bio</a> to introduce yourself.</p>
                 <?php endif; ?>
             </div>
             <div class="profile-hero-actions">
@@ -224,8 +215,6 @@ include __DIR__ . '/includes/header.php';
                     <h2>About</h2>
                     <?php if (!empty($user['bio'])): ?>
                         <p><?= nl2br(htmlspecialchars((string) $user['bio'])) ?></p>
-                    <?php else: ?>
-                        <p class="muted">No bio added yet. <a href="profile.php?tab=edit">Add one</a>.</p>
                     <?php endif; ?>
                     <?php if (!empty($user['phone'])): ?>
                         <p><strong>Phone:</strong> <?= htmlspecialchars((string) $user['phone']) ?></p>
@@ -328,15 +317,6 @@ include __DIR__ . '/includes/header.php';
                         <input name="email" type="email"
                                value="<?= htmlspecialchars((string) ($user['email'] ?? '')) ?>"
                                required maxlength="190">
-                    </label>
-                    <label>Phone Number <span class="profile-label-hint">(optional)</span>
-                        <input name="phone" type="tel"
-                               value="<?= htmlspecialchars((string) ($user['phone'] ?? '')) ?>"
-                               maxlength="40" placeholder="+60 12-345 6789">
-                    </label>
-                    <label>Bio <span class="profile-label-hint">(optional &mdash; max 600 characters)</span>
-                        <textarea name="bio" maxlength="600"
-                                  placeholder="Tell others a bit about yourself..."><?= htmlspecialchars((string) ($user['bio'] ?? '')) ?></textarea>
                     </label>
                     <div class="form-actions">
                         <button type="submit">Save Changes</button>
