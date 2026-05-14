@@ -3578,6 +3578,8 @@ body.admin-app {
 .profile-tab {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    flex: 1;
     min-height: 40px;
     padding: 0.55rem 1.1rem;
     border-radius: 16px;
@@ -4096,7 +4098,7 @@ html.js [data-reveal].is-visible {
     }
 
     .profile-tab {
-        flex-shrink: 0;
+        flex: 0 0 auto;
     }
 
     .profile-hero {
