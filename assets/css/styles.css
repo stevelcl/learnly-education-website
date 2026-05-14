@@ -3640,7 +3640,7 @@ body.admin-app {
 
 /* Edit / Password form */
 .profile-form-panel {
-    max-width: 740px;
+    width: 100%;
 }
 
 .profile-form-row {
