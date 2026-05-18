@@ -114,7 +114,6 @@ include __DIR__ . '/includes/header.php';
 
                     <div class="course-card-footer">
                         <span class="inline-link">View course</span>
-                        <span class="muted"><?= htmlspecialchars($course['level']) ?></span>
                     </div>
                 </article>
             <?php endforeach; ?>

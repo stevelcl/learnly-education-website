@@ -372,7 +372,6 @@ include __DIR__ . '/includes/header.php';
                         <article class="card resource-card">
                             <div class="card-topline">
                                 <span class="tag"><?= htmlspecialchars($course['subject']) ?></span>
-                                <span class="muted"><?= htmlspecialchars($course['level']) ?></span>
                             </div>
                             <h3><?= htmlspecialchars($course['title']) ?></h3>
                             <div class="profile-course-progress">

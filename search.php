@@ -76,7 +76,7 @@ include __DIR__ . '/includes/header.php';
                     <?php foreach ($courses as $course): ?>
                         <div style="margin-bottom: 1rem;">
                             <h3><a href="course.php?id=<?= (int) $course['id'] ?>"><?= htmlspecialchars($course['title']) ?></a></h3>
-                            <p class="muted"><?= htmlspecialchars($course['subject']) ?> | <?= htmlspecialchars($course['level']) ?></p>
+                            <p class="muted"><?= htmlspecialchars($course['subject']) ?></p>
                             <p><?= htmlspecialchars($course['description']) ?></p>
                         </div>
                     <?php endforeach; ?>

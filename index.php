@@ -143,7 +143,6 @@ include __DIR__ . '/includes/header.php';
                 <article class="card resource-card" data-reveal="slide-up" data-reveal-delay="<?= $index ?>">
                     <div class="card-topline">
                         <span class="tag"><?= htmlspecialchars($course['subject']) ?></span>
-                        <span class="muted"><?= htmlspecialchars($course['level']) ?></span>
                     </div>
                     <h3><?= htmlspecialchars($course['title']) ?></h3>
                     <p><?= htmlspecialchars($course['description']) ?></p>
