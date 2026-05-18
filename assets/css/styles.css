@@ -3065,7 +3065,9 @@ body.admin-app {
 }
 
 .admin-order-btn-row > form {
-    display: contents;
+    display: inline-flex;
+    align-items: stretch;
+    margin: 0;
 }
 
 .admin-order-modal {
