@@ -3040,14 +3040,32 @@ body.admin-app {
 }
 
 .admin-order-actions {
-    flex-wrap: nowrap;
-    align-items: center;
-    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: stretch;
 }
 
 .admin-order-status-form {
+    display: flex;
+}
+
+.admin-order-status-form select {
+    flex: 1;
+    min-height: 34px;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.88rem;
+}
+
+.admin-order-btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
     align-items: center;
-    flex-shrink: 0;
+}
+
+.admin-order-btn-row > form {
+    display: contents;
 }
 
 .admin-order-modal {

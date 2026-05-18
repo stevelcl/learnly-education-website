@@ -248,9 +248,8 @@ admin_render_start([
                         <td data-label="Status"><span class="status-pill status-<?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars(ucfirst($order['status'])) ?></span></td>
                         <td data-label="Date"><?= htmlspecialchars((string) $order['created_at']) ?></td>
                         <td data-label="Actions">
-                            <div class="admin-table-actions admin-order-actions">
-                                <button type="button" class="button ghost small" data-order-open='<?= htmlspecialchars(json_encode($orderPayload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES) ?>'>View Details</button>
-                                <form method="post" class="inline-form compact-inline-form admin-order-status-form">
+                            <div class="admin-order-actions">
+                                <form method="post" id="ord-s-<?= (int) $order['id'] ?>" class="admin-order-status-form">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
                                     <input type="hidden" name="action" value="save_status">
@@ -259,26 +258,29 @@ admin_render_start([
                                             <option value="<?= htmlspecialchars($statusOption) ?>" <?= $order['status'] === $statusOption ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($statusOption)) ?></option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <button type="submit" class="button ghost small">Save Status</button>
                                 </form>
-                                <form method="post" class="inline-form">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                                    <input type="hidden" name="action" value="cancel">
-                                    <button type="submit" class="button ghost small" data-confirm="Cancel this order?">Cancel</button>
-                                </form>
-                                <form method="post" class="inline-form">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                                    <input type="hidden" name="action" value="archive">
-                                    <button type="submit" class="button ghost small" data-confirm="Archive this order from the active queue?">Archive</button>
-                                </form>
-                                <form method="post" class="inline-form">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
-                                    <input type="hidden" name="action" value="delete">
-                                    <button type="submit" class="button danger small" data-confirm="Hide this order from active management views? Order history will remain intact.">Delete</button>
-                                </form>
+                                <div class="admin-order-btn-row">
+                                    <button type="button" class="button ghost small" data-order-open='<?= htmlspecialchars(json_encode($orderPayload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES) ?>'>View Details</button>
+                                    <button type="submit" form="ord-s-<?= (int) $order['id'] ?>" class="button ghost small">Save Status</button>
+                                    <form method="post">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                        <input type="hidden" name="action" value="cancel">
+                                        <button type="submit" class="button ghost small" data-confirm="Cancel this order?">Cancel</button>
+                                    </form>
+                                    <form method="post">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                        <input type="hidden" name="action" value="archive">
+                                        <button type="submit" class="button ghost small" data-confirm="Archive this order from the active queue?">Archive</button>
+                                    </form>
+                                    <form method="post">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>">
+                                        <input type="hidden" name="action" value="delete">
+                                        <button type="submit" class="button danger small" data-confirm="Hide this order from active management views? Order history will remain intact.">Delete</button>
+                                    </form>
+                                </div>
                             </div>
                         </td>
                     </tr>
