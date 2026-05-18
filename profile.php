@@ -381,7 +381,7 @@ include __DIR__ . '/includes/header.php';
                                     <span class="muted"><?= (int) $course['completed_items'] ?> / <?= (int) $course['total_items'] ?> steps</span>
                                 </div>
                             </div>
-                            <a class="inline-link" href="learn.php?course=<?= (int) $course['id'] ?>">Continue learning</a>
+                            <a class="inline-link" href="learn/<?= (int) $course['id'] ?>">Continue learning</a>
                         </article>
                     <?php endforeach; ?>
                 </div>
