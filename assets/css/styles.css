@@ -470,10 +470,10 @@ button:active {
 }
 
 .button.small {
-    min-height: 36px;
-    padding: 0.45rem 0.75rem;
+    min-height: 38px;
+    padding: 0.55rem 0.85rem;
     border-radius: 12px;
-    font-size: 0.88rem;
+    font-size: 0.92rem;
 }
 
 .hero-quickstats,
@@ -1949,9 +1949,10 @@ textarea {
 
 .inline-form {
     display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: 0.35rem;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
 }
 
 .forum-post-card {
@@ -2691,18 +2692,17 @@ body.admin-app {
 
 .admin-data-table th,
 .admin-data-table td {
-    padding: 0.65rem 0.8rem;
-    font-size: 0.93rem;
-    line-height: 1.4;
+    padding: 0.75rem 0.85rem;
+    font-size: 0.94rem;
+    line-height: 1.45;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
 .admin-table-actions {
     display: flex;
-    gap: 0.35rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
-    align-items: center;
 }
 
 .admin-compact-table td strong,
@@ -2739,14 +2739,8 @@ body.admin-app {
 .compact-inline-form {
     display: flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.45rem;
     flex-wrap: wrap;
-}
-
-.compact-inline-form select {
-    padding: 0.45rem 0.6rem;
-    min-height: 36px;
-    font-size: 0.88rem;
 }
 
 .admin-detail-grid {
@@ -3022,37 +3016,38 @@ body.admin-app {
 }
 
 .admin-orders-table .col-order {
-    width: 8%;
-}
-
-.admin-orders-table .col-customer {
-    width: 22%;
-}
-
-.admin-orders-table .col-total {
     width: 9%;
 }
 
-.admin-orders-table .col-status {
+.admin-orders-table .col-customer {
+    width: 21%;
+}
+
+.admin-orders-table .col-total {
     width: 10%;
 }
 
+.admin-orders-table .col-status {
+    width: 11%;
+}
+
 .admin-orders-table .col-date {
-    width: 12%;
+    width: 13%;
 }
 
 .admin-orders-table .col-actions {
-    width: 39%;
+    width: 36%;
 }
 
 .admin-order-actions {
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 0.35rem !important;
+    overflow-x: auto;
 }
 
 .admin-order-status-form {
     align-items: center;
-    gap: 0.3rem !important;
+    flex-shrink: 0;
 }
 
 .admin-order-modal {
