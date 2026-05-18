@@ -44,7 +44,6 @@ function admin_course_form_defaults(?array $course = null): array
     return [
         'title' => $course['title'] ?? '',
         'subject' => $course['subject'] ?? '',
-        'level' => $course['level'] ?? '',
         'description' => $course['description'] ?? '',
         'thumbnail_path' => $course['thumbnail_path'] ?? '',
         'banner_path' => $course['banner_path'] ?? '',
@@ -289,7 +288,6 @@ function admin_save_course(array $data, array &$formValues, ?int $courseId = nul
 {
     $title = trim($data['title'] ?? '');
     $subject = trim($data['subject'] ?? '');
-    $level = trim($data['level'] ?? '');
     $description = trim($data['description'] ?? '');
     $thumbnailPath = trim($data['existing_thumbnail_path'] ?? '');
     $bannerPath = trim($data['existing_banner_path'] ?? '');
@@ -313,31 +311,30 @@ function admin_save_course(array $data, array &$formValues, ?int $courseId = nul
     $formValues = [
         'title' => $title,
         'subject' => $subject,
-        'level' => $level,
         'description' => $description,
         'thumbnail_path' => $thumbnailPath,
         'banner_path' => $bannerPath,
     ];
 
-    if ($title === '' || $subject === '' || $level === '' || $description === '') {
+    if ($title === '' || $subject === '' || $description === '') {
         return ['ok' => false, 'error' => 'Please complete all course fields.'];
     }
 
     if ($courseId) {
         $stmt = db()->prepare(
             'UPDATE courses
-             SET title = ?, subject = ?, level = ?, description = ?, thumbnail_path = ?, banner_path = ?
+             SET title = ?, subject = ?, description = ?, thumbnail_path = ?, banner_path = ?
              WHERE id = ?'
         );
-        $stmt->execute([$title, $subject, $level, $description, $thumbnailPath, $bannerPath, $courseId]);
+        $stmt->execute([$title, $subject, $description, $thumbnailPath, $bannerPath, $courseId]);
         return ['ok' => true, 'id' => $courseId];
     }
 
     $stmt = db()->prepare(
-        'INSERT INTO courses (title, subject, level, description, thumbnail_path, banner_path)
-         VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO courses (title, subject, description, thumbnail_path, banner_path)
+         VALUES (?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$title, $subject, $level, $description, $thumbnailPath, $bannerPath]);
+    $stmt->execute([$title, $subject, $description, $thumbnailPath, $bannerPath]);
 
     return ['ok' => true, 'id' => (int) db()->lastInsertId()];
 }

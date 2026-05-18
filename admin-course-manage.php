@@ -137,7 +137,6 @@ admin_render_start([
                         <div class="admin-form-grid">
                             <label>Course title <input name="title" value="<?= htmlspecialchars($formValues['title']) ?>" required></label>
                             <label>Subject <input name="subject" value="<?= htmlspecialchars($formValues['subject']) ?>" required></label>
-                            <label>Level <input name="level" value="<?= htmlspecialchars($formValues['level']) ?>" required></label>
                             <label>Primary course image
                                 <div class="file-input-row">
                                     <input name="thumbnail_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-file-input>

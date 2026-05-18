@@ -139,7 +139,6 @@ include __DIR__ . '/includes/header.php';
                             <span class="course-enrollment-pill"><?= $enrollmentCount ?> enrolled</span>
                         </div>
                         <div class="course-signal-row">
-                            <span class="signal-pill"><?= htmlspecialchars($course['level']) ?></span>
                             <span class="signal-pill"><?= $moduleCount ?> modules</span>
                             <span class="signal-pill"><?= $quizCount ?> quizzes</span>
                             <span class="signal-pill"><?= $estimatedMinutes ?> mins</span>
