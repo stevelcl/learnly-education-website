@@ -390,9 +390,7 @@ include __DIR__ . '/includes/header.php';
             <aside class="learning-right-rail" id="workspace-sidebar">
                 <div class="panel">
                     <h2>Progress Tracker</h2>
-                    <p><strong><?= $progressPercent ?>%</strong> complete</p>
-                    <div class="progress"><span style="width: <?= $progressPercent ?>%"></span></div>
-                    <p class="muted"><?= $completedItems ?> of <?= $totalItems ?> lessons completed.</p>
+                    <p><strong><?= $progressPercent ?>%</strong> complete — <?= $completedItems ?> of <?= $totalItems ?> lessons completed.</p>
                 </div>
 
                 <div class="panel">
