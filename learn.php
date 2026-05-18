@@ -233,11 +233,6 @@ include __DIR__ . '/includes/header.php';
                 <h1><?= htmlspecialchars($course['title']) ?></h1>
                 <p class="muted"><?= htmlspecialchars($course['subject']) ?> | <?= $estimatedMinutes ?> mins | <?= $enrollmentCount ?> enrolled</p>
             </div>
-            <div class="learning-progress-hero">
-                <strong data-progress-percent><?= $progressPercent ?>%</strong>
-                <span class="muted" data-progress-summary><?= $completedItems ?> of <?= $totalItems ?> completed</span>
-                <div class="progress"><span data-progress-bar style="width: <?= $progressPercent ?>%"></span></div>
-            </div>
         </div>
 
         <div class="learning-layout">
@@ -390,7 +385,9 @@ include __DIR__ . '/includes/header.php';
             <aside class="learning-right-rail" id="workspace-sidebar">
                 <div class="panel">
                     <h2>Progress Tracker</h2>
-                    <p><strong><?= $progressPercent ?>%</strong> complete — <?= $completedItems ?> of <?= $totalItems ?> lessons completed.</p>
+                    <p><strong><?= $progressPercent ?>%</strong> complete</p>
+                    <div class="progress"><span style="width: <?= $progressPercent ?>%"></span></div>
+                    <p class="muted"><?= $completedItems ?> of <?= $totalItems ?> lessons completed.</p>
                 </div>
 
                 <div class="panel">
