@@ -42,13 +42,13 @@ $courseInsights = fetch_one(
 );
 
 $reviews = fetch_all(
-    'SELECT rv.rating, rv.comment, rv.updated_at, u.name
+    'SELECT rv.rating, rv.comment, rv.updated_at, COALESCE(u.name, "Anonymous") AS name
      FROM course_reviews rv
-     INNER JOIN users u ON u.id = rv.user_id
+     LEFT JOIN users u ON u.id = rv.user_id
      WHERE rv.course_id = ?
        AND rv.moderation_status = "published"
        AND rv.deleted_at IS NULL
-     ORDER BY rv.updated_at DESC
+     ORDER BY rv.updated_at DESC, rv.id DESC
      LIMIT 6',
     [$courseId]
 );
