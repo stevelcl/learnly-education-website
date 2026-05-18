@@ -4269,6 +4269,9 @@ html.js [data-reveal].is-visible {
     .section-head {
         margin-bottom: 0.95rem;
         gap: 0.7rem;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
     }
 
     .section-head h2 {
