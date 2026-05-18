@@ -14,7 +14,6 @@
                     <a href="courses.php">Courses</a>
                     <a href="forum.php">Forum</a>
                     <a href="bookstore.php">Bookstore</a>
-                    <a href="search.php">Search</a>
                 </div>
             </div>
             <div>
