@@ -133,12 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'toggle_saved' && $user && !$adminPreview) {
-        sync_user_course_progress((int) $user['id'], $courseId, isset($_POST['saved']));
-        header('Location: ' . $stepUrl($step, ['notice' => 'saved'], 'workspace-sidebar'));
-        exit;
-    }
-
     if ($action === 'submit_quiz' && $user && !$adminPreview) {
         $quizId = (int) ($_POST['quiz_id'] ?? 0);
         $selectedOption = strtoupper(trim($_POST['selected_option'] ?? ''));
@@ -179,7 +173,6 @@ $enrollmentCount = (int) ($courseInsights['enrollment_count'] ?? 0);
 $estimatedMinutes = max(20, (((int) ($courseInsights['module_count'] ?? 0)) * 14) + (((int) ($courseInsights['quiz_count'] ?? 0)) * 4));
 
 $noticeMap = [
-    'saved' => 'Course preferences saved.',
     'review_saved' => 'Feedback saved. Thanks for sharing your view of the course.',
 ];
 $message = $noticeMap[$_GET['notice'] ?? ''] ?? '';
@@ -400,14 +393,6 @@ include __DIR__ . '/includes/header.php';
                     <p><strong><?= $progressPercent ?>%</strong> complete</p>
                     <div class="progress"><span style="width: <?= $progressPercent ?>%"></span></div>
                     <p class="muted"><?= $completedItems ?> of <?= $totalItems ?> lessons completed.</p>
-                    <?php if ($user && !$adminPreview): ?>
-                        <form method="post">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="action" value="toggle_saved">
-                            <label class="checkbox"><input type="checkbox" name="saved" <?= !empty($progress['saved']) ? 'checked' : '' ?>> Save this course</label>
-                            <button type="submit">Update Saved Status</button>
-                        </form>
-                    <?php endif; ?>
                 </div>
 
                 <div class="panel">
