@@ -72,11 +72,11 @@ if (!$book) {
 }
 
 $reviews = fetch_all(
-    'SELECT br.rating, br.comment, br.created_at, br.updated_at, u.name
+    'SELECT br.rating, br.comment, br.created_at, br.updated_at, COALESCE(u.name, "Anonymous") AS name
      FROM book_reviews br
-     INNER JOIN users u ON u.id = br.user_id
+     LEFT JOIN users u ON u.id = br.user_id
      WHERE br.book_id = ?
-     ORDER BY br.updated_at DESC, br.created_at DESC',
+     ORDER BY br.updated_at DESC, br.created_at DESC, br.id DESC',
     [$bookId]
 );
 

@@ -275,11 +275,12 @@ function admin_fetch_course_students(int $courseId): array
 function admin_fetch_course_feedback(int $courseId): array
 {
     return fetch_all(
-        'SELECT rv.rating, rv.comment, rv.updated_at, rv.moderation_status, u.name, u.email
+        'SELECT rv.rating, rv.comment, rv.updated_at, rv.moderation_status,
+                COALESCE(u.name, "Anonymous") AS name, COALESCE(u.email, "") AS email
          FROM course_reviews rv
-         JOIN users u ON u.id = rv.user_id
+         LEFT JOIN users u ON u.id = rv.user_id
          WHERE rv.course_id = ? AND rv.deleted_at IS NULL
-         ORDER BY rv.updated_at DESC',
+         ORDER BY rv.updated_at DESC, rv.id DESC',
         [$courseId]
     );
 }
