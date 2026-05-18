@@ -732,7 +732,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setAnalyticsText('[data-analytics-modal-email-copy]', payload.email || '');
         setAnalyticsText('[data-analytics-modal-course]', payload.title || '');
         setAnalyticsText('[data-analytics-modal-subject]', payload.subject || '');
-        setAnalyticsText('[data-analytics-modal-level]', payload.level || '');
         setAnalyticsText('[data-analytics-modal-progress]', payload.progress || '0%');
         setAnalyticsText('[data-analytics-modal-steps]', payload.completed_steps || '0 / 0');
         setAnalyticsText('[data-analytics-modal-quizzes]', payload.quiz_checks || '0 / 0');

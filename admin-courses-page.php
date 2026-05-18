@@ -49,7 +49,6 @@ admin_render_start([
         <article class="panel admin-course-card">
             <div class="card-topline">
                 <span class="tag"><?= htmlspecialchars($course['subject']) ?></span>
-                <span class="muted"><?= htmlspecialchars($course['level']) ?></span>
             </div>
             <h2><?= htmlspecialchars($course['title']) ?></h2>
             <p class="muted"><?= (int) $course['resource_count'] ?> resources | <?= (int) $course['quiz_count'] ?> quizzes</p>

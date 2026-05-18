@@ -516,7 +516,6 @@ admin_render_start([
                             'email' => (string) $row['email'],
                             'title' => (string) $row['title'],
                             'subject' => (string) $row['subject'],
-                            'level' => (string) $row['level'],
                             'progress' => $progressPercent . '%',
                             'completed_steps' => (int) $row['completed_items'] . ' / ' . (int) $row['total_items'],
                             'quiz_checks' => (int) $row['completed_quizzes'] . ' / ' . (int) $row['total_quizzes'],
@@ -593,7 +592,6 @@ admin_render_start([
                 <h3>Enrollment Details</h3>
                 <p><strong>Course:</strong> <span data-analytics-modal-course>Course</span></p>
                 <p><strong>Subject:</strong> <span data-analytics-modal-subject>Subject</span></p>
-                <p><strong>Level:</strong> <span data-analytics-modal-level>Level</span></p>
                 <p><strong>Enrolled:</strong> <span data-analytics-modal-enrolled>--</span></p>
             </section>
             <section class="analytics-detail-section">

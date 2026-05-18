@@ -141,11 +141,10 @@ function course_skill_points(array $course, array $resources): array
 
 function course_audience_points(array $course): array
 {
-    $level = strtolower((string) ($course['level'] ?? ''));
     return [
         'Students starting ' . strtolower((string) $course['subject']) . ' coursework.',
         'Learners who want a guided path instead of scattered notes.',
         'Anyone who benefits from short modules plus quick quiz checks.',
-        $level !== '' ? 'Best suited for ' . $level . ' learners.' : 'Suitable for self-paced undergraduate learning.',
+        'Suitable for self-paced undergraduate learning.',
     ];
 }
